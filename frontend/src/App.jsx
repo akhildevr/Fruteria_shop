@@ -7,6 +7,7 @@ import {
 import BillingScreen from "./billing/BillingScreen";
 import Dashboard from "./admin/Dashboard";
 import Products from "./admin/Products";
+import Orders from "./admin/Orders";
 
 function App() {
 
@@ -29,6 +30,11 @@ function App() {
         <Route
           path="/admin/products"
           element={<Products />}
+        />
+
+        <Route
+          path="/admin/orders"
+          element={<Orders />}
         />
 
       </Routes>

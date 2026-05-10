@@ -1,5 +1,6 @@
 const Customer = require("../models/Customer");
 const Order = require("../models/Order");
+const generateBillId = require("../utils/generateBillId");
 
 exports.createOrder = async (req, res) => {
 
@@ -13,57 +14,70 @@ exports.createOrder = async (req, res) => {
       subtotal += item.price * item.qty;
     });
 
+    let customer = await Customer.findOne({ mobile });
+
+    if (!customer) {
+      customer = await Customer.create({
+        mobile
+      });
+    }
+
+    let rewardUsed = 0;
+    let amountAfterReward = subtotal;
+
+    // APPLY REWARD POINTS
+    if (customer.rewardPoints > 10) {
+      rewardUsed = Math.min(
+        customer.rewardPoints,
+        subtotal
+      );
+
+      amountAfterReward = subtotal - rewardUsed;
+      customer.rewardPoints -= rewardUsed;
+    }
+
+    // APPLY DISCOUNT
     let discount = 0;
-    let rewardPoints = 0;
-    let finalTotal = subtotal;
 
-    if (subtotal > 500) {
-
-      discount = subtotal * 0.10;
-
-      finalTotal = subtotal - discount;
-
-    } else if (mobile) {
-
-      rewardPoints = Math.floor(subtotal * 0.10);
-
+    if (amountAfterReward > 500) {
+      discount = amountAfterReward * 0.10;
     }
 
-    let customer = null;
+    // FINAL TOTAL
+    const finalTotal = amountAfterReward - discount;
 
-    if (mobile) {
+    // ADD NEW REWARD
+    let rewardEarned = 0;
 
-      customer = await Customer.findOne({ mobile });
-
-      if (!customer) {
-
-        customer = await Customer.create({
-          mobile
-        });
-      }
-
-      customer.purchaseCount += 1;
-
-      customer.totalSpent += finalTotal;
-
-      customer.rewardPoints += rewardPoints;
-
-      await customer.save();
+    if (finalTotal <= 500) {
+      rewardEarned = Math.floor(finalTotal * 0.10);
+      customer.rewardPoints += rewardEarned;
     }
+
+    customer.purchaseCount += 1;
+    customer.totalSpent += finalTotal;
+
+    await customer.save();
+
+    const billId = generateBillId();
 
     const order = await Order.create({
 
-      customerId: customer ? customer._id : null,
+      billId,
 
-      mobile: mobile || "Guest",
+      customerId: customer._id,
+
+      mobile,
 
       items,
 
       subtotal,
 
+      rewardUsed,
+
       discount,
 
-      rewardPointsEarned: rewardPoints,
+      rewardPointsEarned: rewardEarned,
 
       finalTotal
 
@@ -74,7 +88,8 @@ exports.createOrder = async (req, res) => {
       order,
       subtotal,
       discount,
-      rewardPoints,
+      rewardUsed,
+      rewardEarned,
       finalTotal,
       totalRewardPoints: customer ? customer.rewardPoints : 0
     });

@@ -7,6 +7,11 @@ const orderSchema = new mongoose.Schema({
     ref: "Customer"
   },
 
+  billId: {
+    type: String,
+    unique: true
+  },
+
   mobile: String,
 
   items: [],
