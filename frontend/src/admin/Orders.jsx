@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
+import AdminNavbar from "./AdminNavbar";
 
 const Orders = () => {
   const [orders, setOrders] = useState([]);
@@ -51,6 +52,7 @@ THANK YOU
 
   return (
     <div className="p-6">
+      <AdminNavbar />
       <h1 className="text-3xl font-bold mb-6">Order History</h1>
       <div className="bg-white shadow-lg rounded-2xl p-6">
         <table className="w-full">

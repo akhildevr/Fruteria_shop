@@ -19,7 +19,9 @@ const io = new Server(server, {
   }
 });
 
-app.use(cors());
+app.use(cors({
+  origin: ['https://fruteria-shop.onrender.com', 'http://localhost:5173']
+}));
 app.use(express.json());
 
 app.use("/api/orders", require("./routes/orderRoutes"));

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
+import AdminNavbar from "./AdminNavbar";
 
 const Dashboard = () => {
   const [orders, setOrders] = useState([]);
@@ -76,7 +77,8 @@ THANK YOU
 
   return (
     <div className="p-5">
-      <h1 className="text-3xl font-bold mb-5">FRUTERIA ADMIN</h1>
+      <AdminNavbar />
+      <h1 className="text-3xl font-bold mb-5">Dashboard</h1>
 
       <div className="grid grid-cols-3 gap-5 mb-10 text-left">
         <div className="bg-green-500 text-white p-5 rounded-xl">
