@@ -1,16 +1,27 @@
-# React + Vite
+# Fruteria Shop - Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+The frontend for the Fruteria Shop application, built with **React**, **Vite**, and **Tailwind CSS**. It provides a real-time billing interface for fruit shop management.
 
-Currently, two official plugins are available:
+## Features
+- **Product Catalog**: Dynamic list of available fruits fetched from the backend.
+- **Billing System**: Interactive cart management for customer orders.
+- **Order Summary**: Displays totals, discounts, and reward points after processing.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Tech Stack
+- **React 18**: UI Logic.
+- **Vite**: Fast build tool and dev server.
+- **Axios**: API communication.
+- **Tailwind CSS**: Utility-first styling.
 
-## React Compiler
+## Development Setup
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+1.  Install dependencies:
+    ```bash
+    npm install
+    ```
+2.  Create a `.env` file and set the API URL:
+    `VITE_API_URL=http://localhost:5000/api`
+3.  Start the development server:
+    ```bash
+    npm run dev
+    ```
