@@ -6,6 +6,7 @@ const BillingScreen = () => {
   const [cart, setCart] = useState([]);
   const [mobile, setMobile] = useState("");
   const [bill, setBill] = useState(null);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -33,16 +34,21 @@ const BillingScreen = () => {
   };
 
   const generateBill = async () => {
+    if (cart.length === 0) return alert("Cart is empty!");
+
+    setLoading(true);
     try {
-      const res = await axios.post(`${import.meta.env.VITE_API_URL}/bills`, {
-        customerMobile: mobile,
+      const res = await axios.post(`${import.meta.env.VITE_API_URL}/orders`, {
+        mobile: mobile,
         items: cart,
       });
       setBill(res.data);
       setCart([]);
       setMobile("");
     } catch (error) {
-      console.error("Error generating bill", error);
+      alert("Error generating bill. Please try again.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -83,9 +89,10 @@ const BillingScreen = () => {
 
         <button
           onClick={generateBill}
-          className="bg-black text-white px-5 py-3 mt-5 rounded-xl"
+          disabled={loading}
+          className={`bg-black text-white px-5 py-3 mt-5 rounded-xl ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
         >
-          Generate Bill
+          {loading ? "Processing..." : "Generate Bill"}
         </button>
       </div>
 

@@ -23,34 +23,39 @@ exports.createOrder = async (req, res) => {
 
       finalTotal = subtotal - discount;
 
-    } else {
+    } else if (mobile) {
 
       rewardPoints = Math.floor(subtotal * 0.10);
 
     }
 
-    let customer = await Customer.findOne({ mobile });
+    let customer = null;
 
-    if (!customer) {
+    if (mobile) {
 
-      customer = await Customer.create({
-        mobile
-      });
+      customer = await Customer.findOne({ mobile });
+
+      if (!customer) {
+
+        customer = await Customer.create({
+          mobile
+        });
+      }
+
+      customer.purchaseCount += 1;
+
+      customer.totalSpent += finalTotal;
+
+      customer.rewardPoints += rewardPoints;
+
+      await customer.save();
     }
-
-    customer.purchaseCount += 1;
-
-    customer.totalSpent += finalTotal;
-
-    customer.rewardPoints += rewardPoints;
-
-    await customer.save();
 
     const order = await Order.create({
 
-      customerId: customer._id,
+      customerId: customer ? customer._id : null,
 
-      mobile,
+      mobile: mobile || "Guest",
 
       items,
 
@@ -71,7 +76,7 @@ exports.createOrder = async (req, res) => {
       discount,
       rewardPoints,
       finalTotal,
-      totalRewardPoints: customer.rewardPoints
+      totalRewardPoints: customer ? customer.rewardPoints : 0
     });
 
   } catch (error) {
