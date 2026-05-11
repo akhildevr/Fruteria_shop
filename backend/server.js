@@ -20,7 +20,11 @@ const io = new Server(server, {
 });
 
 app.use(cors({
-  origin: ['https://fruteria-shop.onrender.com', 'http://localhost:5173']
+  origin: [
+    'https://fruteria-shop.onrender.com',
+    'https://fruteria-shop.vercel.app',
+    'http://localhost:5173'
+  ]
 }));
 app.use(express.json());
 
