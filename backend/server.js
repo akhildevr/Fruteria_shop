@@ -19,12 +19,16 @@ const io = new Server(server, {
   }
 });
 
+// Update CORS to allow all Vercel deployments and local development
+const allowedOrigins = [
+  'https://fruteria-shop.onrender.com',
+  'http://localhost:5173',
+  /\.vercel\.app$/ // Matches any Vercel subdomain
+];
+
 app.use(cors({
-  origin: [
-    'https://fruteria-shop.onrender.com',
-    'https://fruteria-shop-git-master-akhil-r-s-projects.vercel.app',
-    'http://localhost:5173'
-  ]
+  origin: allowedOrigins,
+  credentials: true
 }));
 app.use(express.json());
 
