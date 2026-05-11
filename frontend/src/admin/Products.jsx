@@ -27,7 +27,7 @@ const Products = () => {
   const fetchProducts = async () => {
 
     const res = await axios.get(
-      `${import.meta.env.VITE_API_URL}/products`
+      `${import.meta.env.VITE_API_URL}/api/products`
     );
 
     setProducts(res.data);
@@ -50,7 +50,7 @@ const Products = () => {
 
         await axios.put(
 
-          `${import.meta.env.VITE_API_URL}/products/${form.id}`,
+          `${import.meta.env.VITE_API_URL}/api/products/${form.id}`,
 
           form
         );
@@ -64,7 +64,7 @@ const Products = () => {
 
         await axios.post(
 
-          `${import.meta.env.VITE_API_URL}/products`,
+          `${import.meta.env.VITE_API_URL}/api/products`,
 
           form
         );
@@ -127,7 +127,7 @@ const Products = () => {
 
     await axios.delete(
 
-      `${import.meta.env.VITE_API_URL}/products/${id}`
+      `${import.meta.env.VITE_API_URL}/api/products/${id}`
     );
 
     fetchProducts();

@@ -13,7 +13,7 @@ const Dashboard = () => {
 
   const fetchOrders = async () => {
     try {
-      const res = await axios.get(`${import.meta.env.VITE_API_URL}/orders`);
+      const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/orders`);
       setOrders(res.data);
     } catch (error) {
       console.error("Error fetching orders", error);
@@ -23,7 +23,7 @@ const Dashboard = () => {
   const fetchTodaySales = async () => {
     try {
       const res = await axios.get(
-        `${import.meta.env.VITE_API_URL}/analytics/today-sales`
+        `${import.meta.env.VITE_API_URL}/api/analytics/today-sales`
       );
       setTodaySales(res.data.totalSales);
     } catch (error) {

@@ -11,7 +11,7 @@ const Orders = () => {
 
   const fetchOrders = async () => {
     try {
-      const res = await axios.get(`${import.meta.env.VITE_API_URL}/orders`);
+      const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/orders`);
       setOrders(res.data);
     } catch (error) {
       console.error("Error fetching orders", error);

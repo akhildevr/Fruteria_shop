@@ -26,7 +26,7 @@ const BillingScreen = () => {
   const fetchProducts = async () => {
 
     const res = await axios.get(
-      `${import.meta.env.VITE_API_URL}/products`
+      `${import.meta.env.VITE_API_URL}/api/products`
     );
 
     setProducts(res.data);
@@ -51,7 +51,7 @@ const BillingScreen = () => {
     try {
 
       const res = await axios.get(
-        `${import.meta.env.VITE_API_URL}/customers/${number}`
+        `${import.meta.env.VITE_API_URL}/api/customers/${number}`
       );
 
       setWalletPoints(
@@ -273,7 +273,7 @@ ${receipt}
       setLoading(true);
 
       await axios.post(
-        `${import.meta.env.VITE_API_URL}/orders`,
+        `${import.meta.env.VITE_API_URL}/api/orders`,
         {
           mobile,
           items: cart
