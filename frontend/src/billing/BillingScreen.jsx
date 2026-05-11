@@ -80,31 +80,53 @@ const BillingScreen = () => {
   const finalTotal = amountAfterReward - discount;
   const totalItems = cart.reduce((a, b) => a + b.qty, 0);
 
+  const padText = (text, length) => text.toString().padEnd(length).slice(0, length);
+  const formatLine = (label, value, labelWidth = 13) => `${label.padEnd(labelWidth)} : ${value}`;
+  const formatItemRow = (item) => {
+    const name = padText(item.name, 16);
+    const qty = padText(`${item.qty} x ${item.price}`, 9);
+    const total = `₹${item.qty * item.price}`;
+    return `${name}${qty}${total}`;
+  };
+
   const generateReceipt = () => {
     const date = new Date();
-    return `
-================================
-          FRUTERIA
-================================
-Date : ${date.toLocaleDateString()}
-Time : ${date.toLocaleTimeString()}
-Mobile : ${mobile || "Guest"}
---------------------------------
-Item            Qty     Price
---------------------------------
-${cart.map(item => `${item.name}\n${item.qty} x ${item.price}    ₹${item.qty * item.price}`).join("\n")}
---------------------------------
-Total Items : ${totalItems}
-Subtotal : ₹${subtotal}
-Reward Used : -₹${rewardUsed}
-Discount : ₹${discount}
-${mobile.length >= 10 ? `Reward Added : +${rewardPoints}` : "Guest Order - No Rewards"}
---------------------------------
-Final Total : ₹${finalTotal}
-================================
-      THANK YOU VISIT AGAIN
-================================
-`;
+    const isGuest = mobile.length < 10;
+    const lines = [
+      "================================",
+      "          FRUTERIA",
+      "================================",
+      formatLine("Date", date.toLocaleDateString()),
+      formatLine("Time", date.toLocaleTimeString()),
+      formatLine("Mobile", mobile || "Guest"),
+      "--------------------------------",
+      "Item            Qty      Price",
+      "--------------------------------",
+      ...cart.map(item => formatItemRow(item)),
+      "--------------------------------",
+      formatLine("Total Items", ` ${totalItems}`),
+      formatLine("Subtotal", ` ₹${subtotal}`),
+    ];
+
+    if (!isGuest) {
+      lines.push(formatLine("Reward Used", `-₹${rewardUsed}`));
+    }
+
+    lines.push(formatLine("Discount", ` ₹${discount}`));
+
+    if (!isGuest) {
+      lines.push(formatLine("Reward Added", `+${rewardPoints}`));
+    }
+
+    lines.push(
+      "--------------------------------",
+      formatLine("Final Total", `₹${finalTotal}`),
+      "================================",
+      "      THANK YOU VISIT AGAIN",
+      "================================"
+    );
+
+    return `\n${lines.join("\n")}\n`;
   };
 
   const printBill = () => {

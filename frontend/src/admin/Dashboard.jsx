@@ -6,6 +6,7 @@ const Dashboard = () => {
   const [orders, setOrders] = useState([]);
   const [todaySales, setTodaySales] = useState(0);
   const [searchTerm, setSearchTerm] = useState("");
+  const [selectedDate, setSelectedDate] = useState("");
 
   useEffect(() => {
     fetchOrdersData();
@@ -52,7 +53,15 @@ THANK YOU
 
   const totalSales = orders.reduce((a, b) => a + b.finalTotal, 0);
 
-  const filteredOrders = orders.filter(order => 
+  const formatOrderDate = (date) => new Date(date).toLocaleDateString("en-CA");
+
+  const selectedDateOrders = selectedDate
+    ? orders.filter(order => formatOrderDate(order.createdAt) === selectedDate)
+    : orders;
+
+  const selectedDateSales = selectedDateOrders.reduce((a, b) => a + b.finalTotal, 0);
+
+  const filteredOrders = selectedDateOrders.filter(order => 
     (order.mobile && order.mobile.includes(searchTerm)) || 
     (order.billId && order.billId.toLowerCase().includes(searchTerm.toLowerCase()))
   );
@@ -62,7 +71,7 @@ THANK YOU
       <AdminNavbar />
       <h1 className="text-4xl font-black mb-8 border-b-4 border-black pb-2">DASHBOARD</h1>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-10">
         <div className="bg-green-600 text-white p-8 rounded-3xl shadow-xl border-4 border-black">
           <h2 className="text-2xl font-bold uppercase opacity-80">Today's Sales</h2>
           <p className="text-5xl font-black mt-2">₹{todaySales}</p>
@@ -77,18 +86,46 @@ THANK YOU
           <h2 className="text-2xl font-bold uppercase opacity-80">Total Orders</h2>
           <p className="text-5xl font-black mt-2">{orders.length}</p>
         </div>
+
+        <div className="bg-purple-700 text-white p-8 rounded-3xl shadow-xl border-4 border-black">
+          <h2 className="text-2xl font-bold uppercase opacity-80">Day Sales</h2>
+          <p className="text-5xl font-black mt-2">{selectedDate ? `₹${selectedDateSales}` : "—"}</p>
+          <p className="text-lg mt-2 opacity-80">{selectedDate ? `${selectedDateOrders.length} orders` : "Select a date above"}</p>
+        </div>
       </div>
 
       <div className="bg-white p-6 rounded-3xl shadow-lg border-2 border-gray-300">
-        <div className="mb-6">
-          <label className="block text-lg font-bold mb-2 uppercase">Search Transactions</label>
-          <input
-            type="text"
-            placeholder="🔍 Mobile or Bill ID..."
-            className="w-full md:w-1/3 bg-gray-50 border-4 border-black p-4 rounded-xl text-xl font-bold outline-none focus:bg-white"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+          <div>
+            <label className="block text-lg font-bold mb-2 uppercase">Search Transactions</label>
+            <input
+              type="text"
+              placeholder="🔍 Mobile or Bill ID..."
+              className="w-full bg-gray-50 border-4 border-black p-4 rounded-xl text-xl font-bold outline-none focus:bg-white"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+
+          <div>
+            <label className="block text-lg font-bold mb-2 uppercase">Filter by Day</label>
+            <div className="flex items-center gap-4">
+              <input
+                type="date"
+                className="w-full bg-gray-50 border-4 border-black p-4 rounded-xl text-xl font-bold outline-none focus:bg-white"
+                value={selectedDate}
+                onChange={(e) => setSelectedDate(e.target.value)}
+              />
+              {selectedDate && (
+                <button
+                  onClick={() => setSelectedDate("")}
+                  className="bg-red-600 text-white px-6 py-4 rounded-xl font-bold hover:bg-red-500 transition-all"
+                >
+                  Clear
+                </button>
+              )}
+            </div>
+          </div>
         </div>
 
         <div className="overflow-x-auto rounded-xl border-2 border-black">
