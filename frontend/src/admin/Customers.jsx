@@ -13,7 +13,7 @@ const Customers = () => {
   const fetchCustomers = async () => {
     try {
       console.log("🔄 [FRONTEND] Fetching customers...");
-      const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/customers`);
+      const res = await axios.get(`${import.meta.env.VITE_API_URL}/customers`);
       setCustomers(Array.isArray(res.data) ? res.data : []);
       console.log("Fetched customers data:", res.data); // Debugging: Check what data is received
     } catch (error) {
@@ -21,22 +21,6 @@ const Customers = () => {
     }
   };
 
-  const handleAddPoints = async (mobile) => {
-    const points = prompt(`Enter points to add for ${mobile}:`);
-    if (!points || isNaN(points)) return;
-
-    try {
-      await axios.post(`${import.meta.env.VITE_API_URL}/api/customers/update-points`, {
-        mobile,
-        points: parseInt(points)
-      });
-      alert("Points updated successfully!");
-      fetchCustomers();
-    } catch (error) {
-      console.error("❌ [FRONTEND] Failed to update points", error);
-      alert("Error updating points");
-    }
-  };
 
   const filteredCustomers = customers.filter(c => 
     c.mobile && c.mobile.includes(searchTerm)
