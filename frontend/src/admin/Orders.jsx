@@ -44,64 +44,66 @@ THANK YOU
   );
 
   return (
-    <div className="min-h-screen bg-gray-100 p-6 text-black">
+    <div className="min-h-screen text-slate-100 px-3 py-4" style={{ background: "radial-gradient(circle at top, rgba(56,189,248,0.15), transparent 30%), linear-gradient(180deg, #020617 0%, #060d19 50%, #020616 100%)" }}>
       <AdminNavbar />
-      <h1 className="text-4xl font-black mb-8 border-b-4 border-black pb-2 uppercase tracking-tighter">Order History</h1>
+      <h1 className="font-extrabold text-center tracking-tight text-amber-300 mb-8" style={{ fontSize: "clamp(2.2rem, 6vw, 3rem)" }}>Order History</h1>
 
-      <div className="mb-8">
-        <label className="block font-black mb-2 uppercase text-xl text-gray-700">Filter Orders</label>
-        <input 
-          type="text" 
-          placeholder="🔍 Mobile or Bill ID..."
-          className="w-full md:w-1/2 bg-white border-4 border-black p-5 rounded-2xl text-2xl font-black shadow-lg outline-none"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-        />
-      </div>
+      <div className="mx-auto w-full max-w-6xl">
+        <div className="mb-6">
+          <label className="block font-semibold mb-2 uppercase text-slate-100 text-lg sm:text-xl tracking-[0.14em]">Filter Orders</label>
+          <input 
+            type="text" 
+            placeholder="🔍 Mobile or Bill ID..."
+            className="premium-input w-full md:w-1/2 px-4 py-3 text-[clamp(0.9rem,2.2vw,1.2rem)] font-semibold"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
 
-      <div className="bg-white rounded-3xl shadow-2xl overflow-hidden border-4 border-black">
-        <table className="w-full text-left">
-          <thead className="bg-black text-white">
-            <tr>
-              <th className="p-5 text-xl font-black uppercase">Date</th>
-              <th className="p-5 text-xl font-black uppercase">Customer</th>
-              <th className="p-5 text-xl font-black uppercase">Items Summary</th>
-              <th className="p-5 text-xl font-black uppercase text-right">Total</th>
-              <th className="p-5 text-xl font-black uppercase text-center">Action</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y-4 divide-gray-100">
-            {filteredOrders.map((order, index) => (
-              <tr key={order._id} className={`${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'} hover:bg-green-50 transition-colors`}>
-                <td className="p-5 font-black text-xl">{new Date(order.createdAt).toLocaleDateString()}</td>
-                <td className="p-5">
-                  <div className="font-black text-2xl tracking-tighter">{order.mobile || "GUEST"}</div>
-                  <div className="text-xs font-bold text-gray-400 font-mono">{order.billId || order._id}</div>
-                </td>
-                <td className="p-5">
-                  <div className="flex flex-wrap gap-2">
-                    {order.items.map((item, i) => (
-                      <span key={i} className="bg-gray-200 text-black px-3 py-1 rounded-lg text-sm font-black border border-black/10">
-                        {item.name} x{item.qty}
-                      </span>
-                    ))}
-                  </div>
-                </td>
-                <td className="p-5 text-right">
-                  <div className="text-3xl font-black text-green-700">₹{order.finalTotal}</div>
-                </td>
-                <td className="p-5 text-center">
-                  <button
-                    onClick={() => printBill(order)}
-                    className="bg-black text-white px-8 py-3 rounded-2xl font-black text-lg hover:bg-gray-800 active:scale-90 shadow-lg transition-all"
-                  >
-                    PRINT 🖨️
-                  </button>
-                </td>
+        <div className="premium-card rounded-2xl shadow-2xl overflow-hidden border border-slate-700/70">
+          <table className="w-full text-left">
+            <thead className="bg-slate-900 text-slate-100">
+              <tr>
+                <th className="p-3 sm:p-5 text-sm sm:text-lg font-black uppercase">Date</th>
+                <th className="p-3 sm:p-5 text-sm sm:text-lg font-black uppercase">Customer</th>
+                <th className="p-3 sm:p-5 text-sm sm:text-lg font-black uppercase">Items Summary</th>
+                <th className="p-3 sm:p-5 text-sm sm:text-lg font-black uppercase text-right">Total</th>
+                <th className="p-3 sm:p-5 text-sm sm:text-lg font-black uppercase text-center">Action</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody className="divide-y divide-slate-700">
+              {filteredOrders.map((order, index) => (
+                <tr key={order._id} className={`${index % 2 === 0 ? 'bg-slate-950/50' : 'bg-slate-900/50'} hover:bg-slate-800/50 transition-colors`}>
+                  <td className="p-3 sm:p-5 font-semibold text-slate-100 text-sm sm:text-base">{new Date(order.createdAt).toLocaleDateString()}</td>
+                  <td className="p-3 sm:p-5">
+                    <div className="font-black text-lg sm:text-xl tracking-tighter text-slate-100">{order.mobile || "GUEST"}</div>
+                    <div className="text-xs sm:text-sm font-medium text-slate-400 font-mono">{order.billId || order._id}</div>
+                  </td>
+                  <td className="p-3 sm:p-5">
+                    <div className="flex flex-wrap gap-2">
+                      {order.items.map((item, i) => (
+                        <span key={i} className="bg-slate-700/70 text-slate-100 px-2 sm:px-3 py-1 rounded-lg text-xs sm:text-sm font-semibold border border-slate-600/50">
+                          {item.name} x{item.qty}
+                        </span>
+                      ))}
+                    </div>
+                  </td>
+                  <td className="p-3 sm:p-5 text-right">
+                    <div className="text-xl sm:text-2xl font-black text-emerald-300">₹{order.finalTotal}</div>
+                  </td>
+                  <td className="p-3 sm:p-5 text-center">
+                    <button
+                      onClick={() => printBill(order)}
+                      className="premium-button bg-gradient-to-r from-cyan-400 to-blue-500 text-slate-950 px-4 sm:px-6 py-2 sm:py-3 rounded-xl font-bold hover:from-cyan-300 hover:to-blue-400 transition-all text-sm sm:text-base"
+                    >
+                      PRINT 🖨️
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );

@@ -60,102 +60,104 @@ const Products = () => {
   );
 
   return (
-    <div className="min-h-screen bg-gray-100 p-6 text-black">
+    <div className="min-h-screen text-slate-100 px-3 py-4" style={{ background: "radial-gradient(circle at top, rgba(56,189,248,0.15), transparent 30%), linear-gradient(180deg, #020617 0%, #060d19 50%, #020616 100%)" }}>
       <AdminNavbar />
-      <h1 className="text-4xl font-black mb-8 border-b-4 border-black pb-2 uppercase tracking-tighter">Product Management</h1>
+      <h1 className="font-extrabold text-center tracking-tight text-amber-300 mb-8" style={{ fontSize: "clamp(2.2rem, 6vw, 3rem)" }}>Product Management</h1>
 
-      {/* FORM */}
-      <div className="bg-white shadow-xl rounded-3xl p-8 mb-10 border-4 border-black">
-        <h2 className="text-3xl font-black mb-6 uppercase italic">
-          {editing ? "✏️ Edit Item" : "➕ Add New Item"}
-        </h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div>
-            <label className="block font-black mb-1 uppercase">Name</label>
-            <input
-              type="text"
-              placeholder="Juice/Shake Name"
-              value={form.name}
-              onChange={(e) => setForm({ ...form, name: e.target.value })}
-              className="w-full bg-gray-50 border-4 border-black p-4 rounded-xl text-xl font-bold focus:bg-white outline-none"
-            />
+      <div className="mx-auto w-full max-w-6xl space-y-6">
+        {/* FORM */}
+        <div className="premium-card p-4 sm:p-6 shadow-2xl border border-slate-700/70">
+          <h2 className="font-semibold mb-2 uppercase text-slate-100 text-sm sm:text-base tracking-[0.14em]">
+            {editing ? "✏️ Edit Item" : "➕ Add New Item"}
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
+            <div>
+              <label className="block font-semibold mb-2 uppercase text-slate-100 text-sm sm:text-base">Name</label>
+              <input
+                type="text"
+                placeholder="Juice/Shake Name"
+                value={form.name}
+                onChange={(e) => setForm({ ...form, name: e.target.value })}
+                className="premium-input w-full px-4 py-3 text-[clamp(1rem,2.6vw,1.3rem)] font-semibold"
+              />
+            </div>
+            <div>
+              <label className="block font-semibold mb-2 uppercase text-slate-100 text-sm sm:text-base">Price (₹)</label>
+              <input
+                type="number"
+                placeholder="Price"
+                value={form.price}
+                onChange={(e) => setForm({ ...form, price: e.target.value })}
+                className="premium-input w-full px-4 py-3 text-[clamp(1rem,2.6vw,1.3rem)] font-semibold"
+              />
+            </div>
+            <div>
+              <label className="block font-semibold mb-2 uppercase text-slate-100 text-sm sm:text-base">Category</label>
+              <select
+                value={form.category}
+                onChange={(e) => setForm({ ...form, category: e.target.value })}
+                className="premium-input w-full px-4 py-3 text-[clamp(1rem,2.6vw,1.3rem)] font-semibold"
+              >
+                <option>Juice</option>
+                <option>Shake</option>
+                <option>Mojito</option>
+                <option>Ice Cream</option>
+              </select>
+            </div>
           </div>
-          <div>
-            <label className="block font-black mb-1 uppercase">Price (₹)</label>
-            <input
-              type="number"
-              placeholder="Price"
-              value={form.price}
-              onChange={(e) => setForm({ ...form, price: e.target.value })}
-              className="w-full bg-gray-50 border-4 border-black p-4 rounded-xl text-xl font-bold focus:bg-white outline-none"
-            />
-          </div>
-          <div>
-            <label className="block font-black mb-1 uppercase">Category</label>
-            <select
-              value={form.category}
-              onChange={(e) => setForm({ ...form, category: e.target.value })}
-              className="w-full bg-gray-50 border-4 border-black p-4 rounded-xl text-xl font-bold focus:bg-white outline-none"
-            >
-              <option>Juice</option>
-              <option>Shake</option>
-              <option>Mojito</option>
-              <option>Ice Cream</option>
-            </select>
-          </div>
-        </div>
 
-        <div className="flex gap-4 mt-8">
-          <button onClick={saveProductAction} className="bg-green-500 hover:bg-green-400 text-black px-10 py-4 rounded-2xl text-2xl font-black shadow-lg active:scale-95 transition-all">
-            {editing ? "UPDATE PRODUCT" : "ADD PRODUCT"}
-          </button>
-          {editing && (
-            <button onClick={() => { setEditing(false); setForm({ id: "", name: "", price: "", category: "Juice" }); }} className="bg-gray-400 hover:bg-gray-300 text-black px-10 py-4 rounded-2xl text-2xl font-black shadow-lg">
-              CANCEL
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mt-6">
+            <button onClick={saveProductAction} className="premium-button px-8 py-3 bg-gradient-to-r from-cyan-400 via-sky-400 to-blue-500 text-slate-950 text-lg sm:text-xl font-black shadow-lg hover:from-cyan-300 hover:to-blue-400 transition-all">
+              {editing ? "UPDATE PRODUCT" : "ADD PRODUCT"}
             </button>
-          )}
+            {editing && (
+              <button onClick={() => { setEditing(false); setForm({ id: "", name: "", price: "", category: "Juice" }); }} className="premium-button-secondary px-8 py-3 bg-slate-900/95 text-slate-100 text-lg sm:text-xl font-black border border-slate-600 shadow-lg hover:border-slate-400 transition-all">
+                CANCEL
+              </button>
+            )}
+          </div>
         </div>
-      </div>
 
-      {/* SEARCH */}
-      <div className="mb-8">
-        <label className="block font-black mb-2 uppercase text-xl">Quick Search</label>
-        <input 
-          type="text" 
-          placeholder="🔍 Search name or category..."
-          className="w-full md:w-1/2 bg-white border-4 border-black p-5 rounded-2xl text-2xl font-bold shadow-md outline-none"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-        />
-      </div>
+        {/* SEARCH */}
+        <div className="mb-6">
+          <label className="block font-semibold mb-2 uppercase text-slate-100 text-lg sm:text-xl tracking-[0.14em]">Quick Search</label>
+          <input 
+            type="text" 
+            placeholder="🔍 Search name or category..."
+            className="premium-input w-full md:w-1/2 px-4 py-3 text-[clamp(0.9rem,2.2vw,1.2rem)] font-semibold"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
 
-      {/* TABLE */}
-      <div className="bg-white rounded-3xl shadow-2xl overflow-hidden border-4 border-black">
-        <table className="w-full text-left">
-          <thead className="bg-black text-white">
-            <tr>
-              <th className="p-5 text-xl font-black uppercase">Product</th>
-              <th className="p-5 text-xl font-black uppercase">Category</th>
-              <th className="p-5 text-xl font-black uppercase text-right">Price</th>
-              <th className="p-5 text-xl font-black uppercase text-center">Actions</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y-4 divide-gray-100 font-bold">
-            {filteredProducts.map((product, index) => (
-              <tr key={product._id} className={`${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'} hover:bg-blue-50 transition-colors`}>
-                <td className="p-5 text-2xl font-black">{product.name}</td>
-                <td className="p-5 text-lg uppercase opacity-60">{product.category}</td>
-                <td className="p-5 text-2xl font-black text-right text-green-700">₹{product.price}</td>
-                <td className="p-5 text-center">
-                  <div className="flex justify-center gap-3">
-                    <button onClick={() => editProduct(product)} className="bg-blue-600 text-white px-6 py-2 rounded-xl font-black hover:bg-blue-500 active:scale-90 transition-all">EDIT</button>
-                    <button onClick={() => setConfirm({ show: true, id: product._id })} className="bg-red-600 text-white px-6 py-2 rounded-xl font-black hover:bg-red-500 active:scale-90 transition-all">DELETE</button>
-                  </div>
-                </td>
+        {/* TABLE */}
+        <div className="premium-card rounded-2xl shadow-2xl overflow-hidden border border-slate-700/70">
+          <table className="w-full text-left">
+            <thead className="bg-slate-900 text-slate-100">
+              <tr>
+                <th className="p-3 sm:p-5 text-sm sm:text-lg font-black uppercase">Product</th>
+                <th className="p-3 sm:p-5 text-sm sm:text-lg font-black uppercase">Category</th>
+                <th className="p-3 sm:p-5 text-sm sm:text-lg font-black uppercase text-right">Price</th>
+                <th className="p-3 sm:p-5 text-sm sm:text-lg font-black uppercase text-center">Actions</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody className="divide-y divide-slate-700">
+              {filteredProducts.map((product, index) => (
+                <tr key={product._id} className={`${index % 2 === 0 ? 'bg-slate-950/50' : 'bg-slate-900/50'} hover:bg-slate-800/50 transition-colors`}>
+                  <td className="p-3 sm:p-5 text-lg sm:text-xl font-black text-slate-100">{product.name}</td>
+                  <td className="p-3 sm:p-5 text-sm sm:text-base uppercase text-slate-400">{product.category}</td>
+                  <td className="p-3 sm:p-5 text-lg sm:text-xl font-black text-right text-emerald-300">₹{product.price}</td>
+                  <td className="p-3 sm:p-5 text-center">
+                    <div className="flex flex-col sm:flex-row justify-center gap-2 sm:gap-3">
+                      <button onClick={() => editProduct(product)} className="premium-button bg-gradient-to-r from-amber-400 via-amber-300 to-yellow-400 text-slate-950 px-4 py-2 rounded-xl font-bold hover:from-amber-300 hover:to-yellow-300 transition-all text-sm sm:text-base">EDIT</button>
+                      <button onClick={() => setConfirm({ show: true, id: product._id })} className="premium-button bg-gradient-to-r from-rose-400 to-red-500 text-slate-950 px-4 py-2 rounded-xl font-bold hover:from-rose-300 hover:to-red-400 transition-all text-sm sm:text-base">DELETE</button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {/* CUSTOM ALERT */}
