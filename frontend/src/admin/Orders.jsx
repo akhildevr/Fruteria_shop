@@ -4,6 +4,7 @@ import AdminNavbar from "./AdminNavbar";
 
 const Orders = () => {
   const [orders, setOrders] = useState([]);
+  const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
     fetchOrdersData();
@@ -52,25 +53,49 @@ THANK YOU
     printWindow.print();
   };
 
+  const filteredOrders = orders.filter(order => 
+    (order.mobile && order.mobile.includes(searchTerm)) || 
+    (order._id && order._id.includes(searchTerm))
+  );
+
   return (
     <div className="p-6">
       <AdminNavbar />
       <h1 className="text-3xl font-bold mb-6">Order History</h1>
-      <div className="bg-white shadow-lg rounded-2xl p-6">
+
+      <div className="mb-6">
+        <input 
+          type="text" 
+          placeholder="Search by Mobile or Order ID..." 
+          className="w-full md:w-1/3 p-4 border rounded-xl shadow-sm"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+        />
+      </div>
+
+      <div className="bg-white shadow-lg rounded-2xl p-4 sm:p-6 overflow-x-auto">
         <table className="w-full">
           <thead>
             <tr className="border-b">
               <th className="text-left p-4">Date</th>
               <th className="text-left p-4">Mobile</th>
+              <th className="text-left p-4">Items</th>
               <th className="text-left p-4">Total</th>
               <th className="text-left p-4">Actions</th>
             </tr>
           </thead>
           <tbody>
-            {orders.map((order) => (
+            {filteredOrders.map((order) => (
               <tr key={order._id} className="border-b">
                 <td className="p-4">{new Date(order.createdAt).toLocaleDateString()}</td>
                 <td className="p-4">{order.mobile}</td>
+                <td className="p-4">
+                  <div className="text-xs text-gray-600">
+                    {order.items.map(item => (
+                      <div key={item._id}>{item.name} x {item.qty}</div>
+                    ))}
+                  </div>
+                </td>
                 <td className="p-4">₹{order.finalTotal}</td>
                 <td className="p-4">
                   <button

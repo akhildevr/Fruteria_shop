@@ -12,60 +12,69 @@ exports.createOrder = async (req, res) => {
     const { mobile, items } = req.body;
 
     let subtotal = 0;
-
     items.forEach(item => {
       subtotal += item.price * item.qty;
     });
 
-    let customer = await Customer.findOne({ mobile });
-
-    if (!customer) {
-      console.log("👤 [DB] Creating new customer:", mobile);
-      customer = await Customer.create({
-        mobile
-      });
-      console.log("✅ [DB] New customer created:", customer._id);
-    } else {
-      console.log("👤 [DB] Existing customer found:", mobile);
-    }
-
+    let customer = null;
     let rewardUsed = 0;
     let amountAfterReward = subtotal;
+    let rewardEarned = 0;
+    let totalRewardPoints = 0; // To return in the response
 
-    // APPLY REWARD POINTS
-    if (customer.rewardPoints > 10) {
-      rewardUsed = Math.min(
-        customer.rewardPoints,
-        subtotal
-      );
+    // Only process customer-related logic if a mobile number is provided and valid
+    if (mobile && mobile.length >= 10) {
+      customer = await Customer.findOne({ mobile });
 
-      amountAfterReward = subtotal - rewardUsed;
-      customer.rewardPoints -= rewardUsed;
+      if (!customer) {
+        console.log("👤 [DB] Creating new customer:", mobile);
+        customer = await Customer.create({
+          mobile,
+          rewardPoints: 0,
+          purchaseCount: 0,
+          totalSpent: 0
+        });
+        console.log("✅ [DB] New customer created:", customer._id);
+      } else {
+        console.log("👤 [DB] Existing customer found:", mobile);
+      }
+
+      // APPLY REWARD POINTS (only if customer exists and has enough points)
+      if (customer.rewardPoints > 20) {
+        rewardUsed = Math.min(
+          customer.rewardPoints,
+          subtotal
+        );
+        amountAfterReward = subtotal - rewardUsed;
+        customer.rewardPoints -= rewardUsed;
+      }
+    } else {
+      console.log("⚠️  [API] No valid mobile number provided. Processing as guest order.");
     }
-
     // APPLY DISCOUNT
     let discount = 0;
-
     if (amountAfterReward > 500) {
-      discount = amountAfterReward * 0.10;
+      discount = amountAfterReward * 0.05;
     }
 
     // FINAL TOTAL
     const finalTotal = amountAfterReward - discount;
 
     // ADD NEW REWARD
-    let rewardEarned = 0;
-
-    if (finalTotal <= 500) {
-      rewardEarned = Math.floor(finalTotal * 0.10);
+    if (customer) { // Only earn rewards if a customer is associated
+      rewardEarned = Math.floor(finalTotal * 0.05);
       customer.rewardPoints += rewardEarned;
+      customer.purchaseCount += 1;
+      customer.totalSpent += finalTotal;
+      totalRewardPoints = customer.rewardPoints;
+    } else {
+      console.log("⚠️  [DB] No customer to update for guest order.");
     }
 
-    customer.purchaseCount += 1;
-    customer.totalSpent += finalTotal;
-
-    await customer.save();
-    console.log("✅ [DB] Customer updated - Purchase count:", customer.purchaseCount, "Total spent:", customer.totalSpent, "Reward points:", customer.rewardPoints);
+    if (customer) { // Only save customer if one exists
+      await customer.save();
+      console.log("✅ [DB] Customer updated - Purchase count:", customer.purchaseCount, "Total spent:", customer.totalSpent, "Reward points:", customer.rewardPoints);
+    }
 
     const billId = generateBillId();
     console.log("🧾 [BILLID] Generated:", billId);
@@ -74,9 +83,9 @@ exports.createOrder = async (req, res) => {
 
       billId,
 
-      customerId: customer._id,
+      customerId: customer ? customer._id : null, // Set customerId to null for guest orders
 
-      mobile,
+      mobile: mobile || "Guest", // Store "Guest" if no mobile provided
 
       items,
 
@@ -102,7 +111,7 @@ exports.createOrder = async (req, res) => {
       rewardUsed,
       rewardEarned,
       finalTotal,
-      totalRewardPoints: customer ? customer.rewardPoints : 0
+      totalRewardPoints: totalRewardPoints // Return the actual customer points or 0 for guest
     });
 
   } catch (error) {

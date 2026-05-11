@@ -14,6 +14,7 @@ const Products = () => {
   });
 
   const [editing, setEditing] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
 
 
   // FETCH PRODUCTS
@@ -121,22 +122,26 @@ const Products = () => {
     }
   };
 
+  const filteredProducts = products.filter(p => 
+    p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    p.category.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   return (
 
     <div className="p-6">
       <AdminNavbar />
 
-      <h1 className="text-3xl font-bold mb-6">
+      <h1 className="text-2xl sm:text-3xl font-bold mb-6">
         Product Management
       </h1>
 
 
       {/* FORM */}
 
-      <div className="bg-white shadow-lg rounded-2xl p-6 mb-8">
+      <div className="bg-white shadow-lg rounded-2xl p-4 sm:p-6 mb-8">
 
-        <h2 className="text-2xl font-semibold mb-5">
+        <h2 className="text-xl sm:text-2xl font-semibold mb-5">
 
           {editing
             ? "Edit Product"
@@ -145,7 +150,7 @@ const Products = () => {
         </h2>
 
 
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
 
           {/* NAME */}
 
@@ -202,11 +207,11 @@ const Products = () => {
 
         {/* BUTTONS */}
 
-        <div className="flex gap-4 mt-6">
+        <div className="flex flex-col sm:flex-row gap-4 mt-6">
 
           <button
             onClick={saveProduct}
-            className="bg-green-500 text-white px-6 py-3 rounded-xl"
+            className="bg-green-500 text-white px-6 py-3 rounded-xl font-bold"
           >
 
             {editing
@@ -242,10 +247,20 @@ const Products = () => {
 
       </div>
 
+      <div className="mb-6">
+        <input 
+          type="text" 
+          placeholder="🔍 Search products by name or category..." 
+          className="w-full md:w-1/3 p-4 border rounded-xl shadow-sm focus:ring-2 focus:ring-green-500 outline-none"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+        />
+      </div>
+
 
       {/* PRODUCT TABLE */}
 
-      <div className="bg-white shadow-lg rounded-2xl p-6">
+      <div className="bg-white shadow-lg rounded-2xl p-4 sm:p-6 overflow-x-auto">
 
         <table className="w-full">
 
@@ -276,7 +291,7 @@ const Products = () => {
 
           <tbody>
 
-            {products.map(product => (
+            {filteredProducts.map(product => (
 
               <tr
                 key={product._id}

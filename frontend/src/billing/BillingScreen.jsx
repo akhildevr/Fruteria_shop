@@ -168,7 +168,7 @@ const BillingScreen = () => {
   );
 
   const rewardUsed =
-    walletPoints > 10
+    walletPoints > 20
       ? Math.min(walletPoints, subtotal)
       : 0;
 
@@ -177,12 +177,12 @@ const BillingScreen = () => {
 
   const rewardPoints =
     amountAfterReward <= 500
-      ? Math.floor(amountAfterReward * 0.10)
+      ? Math.floor(amountAfterReward * 0.05)
       : 0;
 
   const discount =
     amountAfterReward > 500
-      ? amountAfterReward * 0.10
+      ? amountAfterReward * 0.05
       : 0;
 
   const finalTotal =
@@ -196,9 +196,8 @@ const BillingScreen = () => {
 
   // GENERATE RECEIPT
   const generateReceipt = () => {
-
     const date = new Date();
-
+    const customerMobileDisplay = mobile || "Guest"; // Display "Guest" if mobile is empty
     return `
 ================================
           FRUTERIA
@@ -207,7 +206,7 @@ const BillingScreen = () => {
 Date : ${date.toLocaleDateString()}
 Time : ${date.toLocaleTimeString()}
 
-Mobile : ${mobile}
+Mobile : ${customerMobileDisplay}
 
 --------------------------------
 Item            Qty     Price
@@ -314,11 +313,11 @@ ${receipt}
 
   return (
 
-    <div className="min-h-screen bg-gray-100 p-5">
+    <div className="min-h-screen bg-gray-100 p-2 sm:p-5">
 
-      <div className="max-w-5xl mx-auto bg-white rounded-2xl shadow-lg p-6">
+      <div className="max-w-5xl mx-auto bg-white rounded-2xl shadow-lg p-4 sm:p-6">
 
-        <h1 className="text-4xl font-bold mb-6">
+        <h1 className="text-3xl sm:text-4xl font-bold mb-6">
           FRUTERIA
         </h1>
 
@@ -542,12 +541,12 @@ ${receipt}
 
           {/* ACTION BUTTONS */}
 
-          <div className="flex gap-4 mt-8">
+          <div className="flex flex-col sm:flex-row gap-4 mt-8">
 
             <button
               onClick={generateBill}
               disabled={loading}
-              className="bg-black text-white px-6 py-4 rounded-xl flex-1"
+              className="bg-black text-white px-6 py-4 rounded-xl flex-1 text-lg font-bold active:scale-95 transition-transform"
             >
               {loading
                 ? "Saving..."
@@ -556,7 +555,7 @@ ${receipt}
 
             <button
               onClick={clearBill}
-              className="bg-red-500 text-white px-6 py-4 rounded-xl"
+              className="bg-red-500 text-white px-6 py-4 rounded-xl font-semibold active:scale-95 transition-transform"
             >
               Clear Bill
             </button>

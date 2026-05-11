@@ -5,6 +5,7 @@ import AdminNavbar from "./AdminNavbar";
 const Dashboard = () => {
   const [orders, setOrders] = useState([]);
   const [todaySales, setTodaySales] = useState(0);
+  const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
     fetchOrdersData();
@@ -77,12 +78,17 @@ THANK YOU
 
   const totalSales = orders.reduce((a, b) => a + b.finalTotal, 0);
 
+  const filteredOrders = orders.filter(order => 
+    (order.mobile && order.mobile.includes(searchTerm)) || 
+    (order.billId && order.billId.toLowerCase().includes(searchTerm.toLowerCase()))
+  );
+
   return (
     <div className="p-5">
       <AdminNavbar />
       <h1 className="text-3xl font-bold mb-5">Dashboard</h1>
 
-      <div className="grid grid-cols-3 gap-5 mb-10 text-left">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 mb-10 text-left">
         <div className="bg-green-500 text-white p-5 rounded-xl">
           <h2 className="text-xl">Today's Sales</h2>
           <p className="text-3xl font-bold">₹{todaySales}</p>
@@ -99,10 +105,22 @@ THANK YOU
         </div>
       </div>
 
+      <div className="mb-4">
+        <input 
+          type="text" 
+          placeholder="Search by Mobile or Bill ID..." 
+          className="w-full md:w-1/3 p-3 border rounded-xl"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+        />
+      </div>
+
+      <div className="overflow-x-auto bg-white shadow rounded-xl">
       <table className="w-full border">
         <thead>
           <tr>
             <th className="border p-2">Date</th>
+            <th className="border p-2">Bill ID</th>
             <th className="border p-2">Mobile</th>
             <th className="border p-2">Total</th>
             <th className="border p-2">Action</th>
@@ -110,11 +128,12 @@ THANK YOU
         </thead>
 
         <tbody>
-          {orders.map((order) => (
+          {filteredOrders.map((order) => (
             <tr key={order._id} className="text-center">
               <td className="border p-2">
                 {new Date(order.createdAt).toLocaleDateString()}
               </td>
+              <td className="border p-2 font-mono text-sm">{order.billId}</td>
               <td className="border p-2">{order.mobile || "Guest"}</td>
               <td className="border p-2">₹{order.finalTotal}</td>
               <td className="border p-2">
@@ -129,6 +148,7 @@ THANK YOU
           ))}
         </tbody>
       </table>
+      </div>
     </div>
   );
 };
