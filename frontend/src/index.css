@@ -28,17 +28,55 @@
 
 body {
   margin: 0;
-  background-color: var(--bg-body);
   color: var(--text-primary);
+  background: radial-gradient(circle at top, rgba(56, 189, 248, 0.18), transparent 30%),
+    linear-gradient(180deg, #020617 0%, #060d19 50%, #020616 100%);
 }
 
 h1, h2, h3, h4 {
-  color: var(--text-primary);
+  color: #f8fafc;
   font-weight: 700;
 }
 
 #root {
   min-height: 100vh;
+}
+
+.premium-card {
+  background: rgba(15, 23, 42, 0.92);
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  border-radius: 2rem;
+  box-shadow: 0 40px 120px -50px rgba(0, 0, 0, 0.55);
+}
+
+.premium-input {
+  background: rgba(15, 23, 42, 0.95);
+  border: 1px solid rgba(148, 163, 184, 0.24);
+  color: #f8fafc;
+  border-radius: 1.5rem;
+  min-width: 0;
+}
+
+.premium-input:focus {
+  outline: none;
+  box-shadow: 0 0 0 6px rgba(56, 189, 248, 0.16);
+  border-color: #38bdf8;
+}
+
+.premium-button {
+  border-radius: 1.75rem;
+  box-shadow: 0 18px 40px -18px rgba(251, 191, 36, 0.8);
+}
+
+.premium-button-secondary {
+  border-radius: 1.75rem;
+  border: 1px solid rgba(148, 163, 184, 0.3);
+}
+
+@media (max-width: 768px) {
+  .premium-card {
+    border-radius: 1.5rem;
+  }
 }
 
 /* Common Card Style */
