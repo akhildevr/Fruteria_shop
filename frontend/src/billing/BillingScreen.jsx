@@ -444,30 +444,23 @@ ${receipt}
 
             <div
               key={item._id}
-              className="flex justify-between items-center border-b py-4"
+              className="grid grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-4 border-b py-4"
             >
 
-              <div>
-
-                <h3 className="font-semibold">
+              <div className="min-w-0">
+                <h3 className="font-semibold truncate">
                   {item.name}
                 </h3>
 
-                <p>
+                <p className="text-sm text-gray-600">
                   ₹{item.price}
                 </p>
-
               </div>
 
-
               {/* QTY */}
-
               <div className="flex items-center gap-3">
-
                 <button
-                  onClick={() =>
-                    decreaseQty(item._id)
-                  }
+                  onClick={() => decreaseQty(item._id)}
                   className="bg-red-500 text-white w-8 h-8 rounded-full"
                 >
                   -
@@ -478,23 +471,16 @@ ${receipt}
                 </span>
 
                 <button
-                  onClick={() =>
-                    increaseQty(item._id)
-                  }
+                  onClick={() => increaseQty(item._id)}
                   className="bg-green-500 text-white w-8 h-8 rounded-full"
                 >
                   +
                 </button>
-
               </div>
 
-
               {/* PRICE */}
-
-              <div className="font-bold">
-
+              <div className="font-bold text-right">
                 ₹{item.qty * item.price}
-
               </div>
 
             </div>
