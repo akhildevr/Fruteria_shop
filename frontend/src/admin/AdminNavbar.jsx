@@ -12,8 +12,8 @@ const AdminNavbar = () => {
   ];
 
   return (
-    <nav className="bg-white shadow-md p-4 mb-6 rounded-2xl flex gap-6 items-center">
-      <h2 className="text-xl font-bold text-green-600 mr-4">Fruteria Admin</h2>
+    <nav className="bg-white shadow-md p-4 mb-6 rounded-2xl flex gap-6 items-center"> 
+      <h2 className="text-2xl font-black text-orange-600 mr-4 tracking-tighter">Fruteria Admin</h2>
       {links.map((link) => (
         <Link
           key={link.path}

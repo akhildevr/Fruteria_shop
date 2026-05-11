@@ -2,570 +2,247 @@ import { useEffect, useMemo, useState } from "react";
 import { fetchProducts, fetchCustomer, createOrder } from "../utils/api";
 
 const BillingScreen = () => {
-
   const [products, setProducts] = useState([]);
-
   const [search, setSearch] = useState("");
-
   const [cart, setCart] = useState([]);
-
   const [mobile, setMobile] = useState("");
-
   const [walletPoints, setWalletPoints] = useState(0);
-
   const [loading, setLoading] = useState(false);
-
   const [showDropdown, setShowDropdown] = useState(false);
 
-
-  // FETCH PRODUCTS
   useEffect(() => {
-
     fetchProductsData();
-
   }, []);
 
   const fetchProductsData = async () => {
-
     try {
-      console.log("🔄 [FRONTEND] Fetching products...");
       const res = await fetchProducts();
-      console.log("✅ [FRONTEND] Products received:", res.data.length, "items");
       setProducts(res.data);
     } catch (error) {
-      console.error("❌ [FRONTEND] Fetch products failed:", error.message);
+      console.error("Fetch products failed:", error);
     }
   };
 
-
-  // SEARCH FILTER
   const filteredProducts = useMemo(() => {
-
     return products.filter(product =>
-      product.name
-        .toLowerCase()
-        .includes(search.toLowerCase())
+      product.name.toLowerCase().includes(search.toLowerCase())
     );
-
   }, [products, search]);
 
-
-  // FETCH CUSTOMER REWARD POINTS
   const fetchCustomerData = async (number) => {
-
     try {
-      console.log("🔄 [FRONTEND] Fetching customer " + number + "...");
       const res = await fetchCustomer(number);
-      console.log("✅ [FRONTEND] Customer response:", res.data);
-      setWalletPoints(
-        res.data.rewardPoints || 0
-      );
-
-    } catch (error) {
-      console.error("❌ [FRONTEND] Fetch customer failed:", error.message);
+      setWalletPoints(res.data.rewardPoints || 0);
+    } catch {
       setWalletPoints(0);
     }
   };
 
-
-  // MOBILE INPUT
   const handleMobileChange = (e) => {
-
     const value = e.target.value;
-
     setMobile(value);
-
     if (value.length >= 10) {
-
       fetchCustomerData(value);
-
     }
   };
 
-
-  // ADD PRODUCT TO CART
   const addToCart = (product) => {
-
-    const existing = cart.find(
-      item => item._id === product._id
-    );
-
+    const existing = cart.find(item => item._id === product._id);
     if (existing) {
-
       setCart(cart.map(item =>
-
-        item._id === product._id
-
-          ? {
-              ...item,
-              qty: item.qty + 1
-            }
-
-          : item
+        item._id === product._id ? { ...item, qty: item.qty + 1 } : item
       ));
-
     } else {
-
-      setCart([
-        ...cart,
-        {
-          ...product,
-          qty: 1
-        }
-      ]);
-
+      setCart([...cart, { ...product, qty: 1 }]);
     }
-
     setSearch("");
   };
 
-
-  // INCREASE QTY
   const increaseQty = (id) => {
-
     setCart(cart.map(item =>
-
-      item._id === id
-
-        ? {
-            ...item,
-            qty: item.qty + 1
-          }
-
-        : item
+      item._id === id ? { ...item, qty: item.qty + 1 } : item
     ));
   };
 
-
-  // DECREASE QTY
   const decreaseQty = (id) => {
-
     const updated = cart.map(item =>
-
-      item._id === id
-
-        ? {
-            ...item,
-            qty: item.qty - 1
-          }
-
-        : item
+      item._id === id ? { ...item, qty: item.qty - 1 } : item
     );
-
-    setCart(
-      updated.filter(item => item.qty > 0)
-    );
+    setCart(updated.filter(item => item.qty > 0));
   };
 
+  const subtotal = cart.reduce((sum, item) => sum + item.price * item.qty, 0);
+  const rewardUsed = walletPoints > 20 ? Math.min(walletPoints, subtotal) : 0;
+  const amountAfterReward = subtotal - rewardUsed;
+  const rewardPoints = amountAfterReward <= 500 ? Math.floor(amountAfterReward * 0.05) : 0;
+  const discount = amountAfterReward > 500 ? amountAfterReward * 0.05 : 0;
+  const finalTotal = amountAfterReward - discount;
+  const totalItems = cart.reduce((a, b) => a + b.qty, 0);
 
-  // CALCULATIONS
-  const subtotal = cart.reduce(
-
-    (sum, item) =>
-      sum + item.price * item.qty,
-
-    0
-  );
-
-  const rewardUsed =
-    walletPoints > 20
-      ? Math.min(walletPoints, subtotal)
-      : 0;
-
-  const amountAfterReward =
-    subtotal - rewardUsed;
-
-  const rewardPoints =
-    amountAfterReward <= 500
-      ? Math.floor(amountAfterReward * 0.05)
-      : 0;
-
-  const discount =
-    amountAfterReward > 500
-      ? amountAfterReward * 0.05
-      : 0;
-
-  const finalTotal =
-    amountAfterReward - discount;
-
-  const totalItems = cart.reduce(
-    (a, b) => a + b.qty,
-    0
-  );
-
-
-  // GENERATE RECEIPT
   const generateReceipt = () => {
     const date = new Date();
-    const customerMobileDisplay = mobile || "Guest"; // Display "Guest" if mobile is empty
     return `
 ================================
           FRUTERIA
 ================================
-
 Date : ${date.toLocaleDateString()}
 Time : ${date.toLocaleTimeString()}
-
-Mobile : ${customerMobileDisplay}
-
+Mobile : ${mobile || "Guest"}
 --------------------------------
 Item            Qty     Price
 --------------------------------
-
-${cart.map(item => `
-${item.name}
-${item.qty} x ${item.price}    ₹${item.qty * item.price}
-`).join("")}
-
+${cart.map(item => `${item.name}\n${item.qty} x ${item.price}    ₹${item.qty * item.price}`).join("\n")}
 --------------------------------
-
 Total Items : ${totalItems}
-
 Subtotal : ₹${subtotal}
-
 Reward Used : -₹${rewardUsed}
-
 Discount : ₹${discount}
-
-Reward Added : +${rewardPoints}
-
+${mobile.length >= 10 ? `Reward Added : +${rewardPoints}` : "Guest Order - No Rewards"}
 --------------------------------
-
 Final Total : ₹${finalTotal}
-
 ================================
       THANK YOU VISIT AGAIN
 ================================
 `;
   };
 
-
-  // PRINT BILL
   const printBill = () => {
-
     const receipt = generateReceipt();
-
-    const printWindow = window.open(
-      "",
-      "_blank"
-    );
-
-    printWindow.document.write(`
-      <pre style="font-size:16px">
-${receipt}
-      </pre>
-    `);
-
+    const printWindow = window.open("", "_blank");
+    printWindow.document.write(`<pre style="font-size:16px">${receipt}</pre>`);
     printWindow.print();
   };
 
-
-  // SAVE ORDER
-  const generateBill = async () => {
-
-    if (cart.length === 0) {
-      return alert(
-        "Add products"
-      );
-    }
-
+  const saveOrderAction = async () => {
+    if (cart.length === 0) return alert("Add products");
     try {
-
       setLoading(true);
-      console.log("📝 [FRONTEND] Creating order...");
-      await createOrder({
-        mobile,
-        items: cart
-      });
-      console.log("✅ [FRONTEND] Order created successfully!");
-
       printBill();
-
-      alert("Order Saved");
-
+      await createOrder({ mobile, items: cart });
+      alert("Order Saved Successfully");
       clearBill();
-
     } catch (error) {
-      console.error("❌ [FRONTEND] Save order failed:", error.message);
       alert("Error saving order");
-
     } finally {
-
       setLoading(false);
-
     }
   };
 
-
-  // CLEAR BILL
   const clearBill = () => {
-
     setCart([]);
-
     setSearch("");
-
     setMobile("");
-
     setWalletPoints(0);
-
   };
-
 
   return (
+    <div className="min-h-screen bg-[#e5e7eb] p-4 text-black">
+      <div className="max-w-4xl mx-auto bg-white rounded-3xl shadow-2xl p-6 border-2 border-gray-400">
+        <h1 className="text-6xl font-black text-orange-600 mb-8 text-center tracking-tighter">FRUTERIA</h1>
 
-    <div className="min-h-screen bg-gray-100 p-2 sm:p-5">
-
-      <div className="max-w-5xl mx-auto bg-white rounded-2xl shadow-lg p-4 sm:p-6">
-
-        <h1 className="text-3xl sm:text-4xl font-bold mb-6">
-          FRUTERIA
-        </h1>
-
-
-        {/* MOBILE NUMBER */}
-
-        <div className="mb-5">
-
-          <label className="font-semibold">
-            Customer Mobile
-          </label>
-
+        {/* MOBILE SECTION */}
+        <div className="bg-gray-100 p-6 rounded-2xl mb-6 border-2 border-gray-300">
+          <label className="block text-xl font-bold text-black mb-2 uppercase tracking-wide">Customer Mobile</label>
           <input
             type="tel"
             value={mobile}
             onChange={handleMobileChange}
             placeholder="Enter Mobile Number"
-            className="w-full border p-4 rounded-xl mt-2 text-xl"
+            className="w-full bg-white border-4 border-black p-5 rounded-xl text-3xl font-black focus:bg-yellow-50 outline-none transition-all"
             maxLength={10}
           />
-
+          {walletPoints > 0 && (
+            <div className="mt-4 bg-yellow-400 p-4 rounded-xl border-2 border-black">
+              <span className="text-xl font-bold">Reward Wallet: <span className="text-3xl">{walletPoints}</span> Points</span>
+            </div>
+          )}
         </div>
 
-
-        {/* REWARD POINTS */}
-
-        <div className="bg-yellow-100 p-4 rounded-xl mb-5">
-
-          Reward Wallet :
-          <span className="font-bold ml-2">
-            {walletPoints} Points
-          </span>
-
-        </div>
-
-
-        {/* SEARCH */}
-
-        <div className="mb-5 relative">
-
-          <label className="font-semibold">
-            Search Product
-          </label>
-
+        {/* SEARCH SECTION */}
+        <div className="relative mb-8">
+          <label className="block text-xl font-bold text-black mb-2 uppercase tracking-wide">Search & Add Product</label>
           <input
             type="text"
             value={search}
             onFocus={() => setShowDropdown(true)}
-            onChange={(e) => {
-              setSearch(e.target.value);
-              setShowDropdown(true);
-            }}
-            placeholder="🔍 Search Product (e.g. Apple Juice)..."
-            className="w-full border p-4 rounded-xl mt-2 focus:ring-2 focus:ring-green-500 outline-none"
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="🔍 Type Product Name..."
+            className="w-full bg-white border-4 border-black p-5 rounded-xl text-2xl font-bold focus:bg-blue-50 outline-none transition-all"
           />
-
-
-          {/* DROPDOWN SEARCH RESULTS */}
-
           {showDropdown && (
-
-            <div className="absolute left-0 right-0 top-full mt-1 bg-white border rounded-xl shadow-2xl z-50 max-h-60 overflow-y-auto">
-
-              {filteredProducts.length > 0 ? (
-
-                filteredProducts.map(product => (
-
-                  <div
-                    key={product._id}
-                    className="flex justify-between items-center p-4 border-b hover:bg-gray-50 cursor-pointer transition-colors"
-                    onClick={() => {
-                      addToCart(product);
-                      setShowDropdown(false);
-                    }}
-                  >
-
-                    <div>
-
-                      <h2 className="font-bold text-lg">
-                        {product.name}
-                      </h2>
-
-                      <p className="text-gray-500">
-                        {product.category} • ₹{product.price}
-                      </p>
-
+            <>
+              <div className="fixed inset-0 z-40" onClick={() => setShowDropdown(false)}></div>
+              <div className="absolute left-0 right-0 top-full mt-2 bg-white border-4 border-black rounded-2xl shadow-2xl z-50 max-h-96 overflow-y-auto">
+                {filteredProducts.length > 0 ? (
+                  filteredProducts.map(product => (
+                    <div
+                      key={product._id}
+                      className="flex justify-between items-center p-5 border-b-2 border-gray-200 hover:bg-green-100 cursor-pointer transition-colors"
+                      onClick={() => { addToCart(product); setShowDropdown(false); }}
+                    >
+                      <div>
+                        <h2 className="font-black text-2xl text-black">{product.name}</h2>
+                        <p className="text-lg font-bold text-gray-700">{product.category} • ₹{product.price}</p>
+                      </div>
+                      <div className="bg-black text-white font-black px-6 py-2 rounded-xl text-xl">ADD +</div>
                     </div>
-
-                    <div className="bg-green-100 text-green-600 font-bold px-3 py-1 rounded-lg">
-                      Add +
-                    </div>
-
-                  </div>
-
-                ))
-
-              ) : (
-
-                <div className="p-4 text-center text-gray-500">
-                  No products found for "{search}"
-                </div>
-
-              )}
-
-            </div>
-
+                  ))
+                ) : (
+                  <div className="p-8 text-center text-2xl font-bold text-gray-500">No products found</div>
+                )}
+              </div>
+            </>
           )}
-
-          {/* CLOSE DROPDOWN ON CLICK OUTSIDE (HANDLED BY BUTTON OR OVERLAY) */}
-          {showDropdown && (
-            <div
-              className="fixed inset-0 z-40"
-              onClick={() => setShowDropdown(false)}
-            ></div>
-          )}
-
         </div>
 
-
-        {/* CART */}
-
-        <div className="bg-gray-50 rounded-xl p-5">
-
-          <h2 className="text-2xl font-bold mb-5">
-            CART
-          </h2>
-
-          {cart.length === 0 && (
-
-            <p>
-              No Items Added
-            </p>
-
-          )}
-
-
-          {cart.map(item => (
-
-            <div
-              key={item._id}
-              className="grid grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-4 border-b py-4"
-            >
-
-              <div className="min-w-0">
-                <h3 className="font-semibold truncate">
-                  {item.name}
-                </h3>
-
-                <p className="text-sm text-gray-600">
-                  ₹{item.price}
-                </p>
-              </div>
-
-              {/* QTY */}
-              <div className="flex items-center gap-3">
-                <button
-                  onClick={() => decreaseQty(item._id)}
-                  className="bg-red-500 text-white w-8 h-8 rounded-full"
-                >
-                  -
-                </button>
-
-                <span className="font-bold">
-                  {item.qty}
-                </span>
-
-                <button
-                  onClick={() => increaseQty(item._id)}
-                  className="bg-green-500 text-white w-8 h-8 rounded-full"
-                >
-                  +
-                </button>
-              </div>
-
-              {/* PRICE */}
-              <div className="font-bold text-right">
-                ₹{item.qty * item.price}
-              </div>
-
+        {/* CART SECTION */}
+        <div className="bg-black text-white rounded-3xl p-6 shadow-xl">
+          <h2 className="text-3xl font-black mb-6 border-b-4 border-orange-500 pb-2 uppercase tracking-tighter !text-white">Cart Items</h2>
+          {cart.length === 0 ? (
+            <p className="text-2xl text-center py-10 font-bold opacity-50">YOUR CART IS EMPTY</p>
+          ) : (
+            <div className="space-y-4">
+              {cart.map(item => (
+                <div key={item._id} className="bg-zinc-800 text-white p-4 rounded-2xl grid grid-cols-[1fr_auto_auto] items-center gap-4 border border-zinc-700">
+                  <div>
+                    <h3 className="text-2xl font-black leading-none !text-white">{item.name}</h3>
+                    <p className="text-lg font-bold text-orange-400">₹{item.price}</p>
+                  </div>
+                  <div className="flex items-center gap-4 bg-gray-200 p-2 rounded-xl border-2 border-black">
+                    <button onClick={() => decreaseQty(item._id)} className="bg-red-600 text-white w-10 h-10 rounded-lg text-2xl font-black">-</button>
+                    <span className="text-2xl font-black w-8 text-center">{item.qty}</span>
+                    <button onClick={() => increaseQty(item._id)} className="bg-green-500 text-white w-10 h-10 rounded-lg text-2xl font-black">+</button>
+                  </div>
+                  <div className="text-2xl font-black min-w-[100px] text-right">₹{item.qty * item.price}</div>
+                </div>
+              ))}
             </div>
-
-          ))}
-
+          )}
 
           {/* TOTALS */}
-
-          <div className="mt-6 space-y-2">
-
-            <div className="flex justify-between">
-              <span>Total Items</span>
-              <span>{totalItems}</span>
-            </div>
-
-            <div className="flex justify-between">
-              <span>Subtotal</span>
-              <span>₹{subtotal}</span>
-            </div>
-
-            <div className="flex justify-between">
-              <span>Reward Used</span>
-              <span>-₹{rewardUsed}</span>
-            </div>
-
-            <div className="flex justify-between">
-              <span>Reward Added</span>
-              <span>+{rewardPoints}</span>
-            </div>
-
-            <div className="flex justify-between">
-              <span>Discount</span>
-              <span>₹{discount}</span>
-            </div>
-
-            <div className="flex justify-between text-2xl font-bold mt-4">
-              <span>Final Total</span>
+          <div className="mt-8 pt-6 border-t-4 border-dashed border-gray-600 space-y-3">
+            <div className="flex justify-between text-xl font-bold"><span>Items:</span><span>{totalItems}</span></div>
+            <div className="flex justify-between text-xl font-bold"><span>Subtotal:</span><span>₹{subtotal}</span></div>
+            {rewardUsed > 0 && <div className="flex justify-between text-xl font-bold text-yellow-400"><span>Reward Used:</span><span>-₹{rewardUsed}</span></div>}
+            {discount > 0 && <div className="flex justify-between text-xl font-bold text-red-400"><span>Discount:</span><span>-₹{discount}</span></div>}
+            {mobile.length >= 10 && <div className="flex justify-between text-xl font-bold text-green-400"><span>Reward Earned:</span><span>+{rewardPoints}</span></div>}
+            <div className="flex justify-between text-5xl font-black mt-6 bg-white text-black p-6 rounded-2xl border-4 border-yellow-400 shadow-inner">
+              <span>TOTAL</span>
               <span>₹{finalTotal}</span>
             </div>
-
           </div>
 
-
-          {/* ACTION BUTTONS */}
-
-          <div className="flex flex-col sm:flex-row gap-4 mt-8">
-
-            <button
-              onClick={generateBill}
-              disabled={loading}
-              className="bg-black text-white px-6 py-4 rounded-xl flex-1 text-lg font-bold active:scale-95 transition-transform"
-            >
-              {loading
-                ? "Saving..."
-                : "Generate & Print Bill"}
+          {/* ACTIONS */}
+          <div className="grid grid-cols-1 gap-4 mt-8">
+            <button onClick={saveOrderAction} disabled={loading} className="bg-green-500 hover:bg-green-400 text-black text-3xl font-black py-8 rounded-3xl shadow-xl active:scale-95 transition-all">
+              {loading ? "SAVING..." : "✅ SAVE & PRINT BILL"}
             </button>
-
-            <button
-              onClick={clearBill}
-              className="bg-red-500 text-white px-6 py-4 rounded-xl font-semibold active:scale-95 transition-transform"
-            >
-              Clear Bill
+            <button onClick={clearBill} className="bg-red-600 hover:bg-red-500 text-white text-xl font-black py-4 rounded-2xl shadow-lg active:scale-95 transition-all">
+              🗑️ CLEAR ALL
             </button>
-
           </div>
-
         </div>
-
       </div>
-
     </div>
   );
 };

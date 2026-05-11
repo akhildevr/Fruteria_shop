@@ -6,68 +6,63 @@ const Customers = () => {
   const [customers, setCustomers] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
 
-  useEffect(() => {
-    fetchCustomers();
-  }, []);
+  useEffect(() => { fetchCustomers(); }, []);
 
   const fetchCustomers = async () => {
     try {
-      console.log("🔄 [FRONTEND] Fetching customers...");
       const res = await axios.get(`${import.meta.env.VITE_API_URL}/customers`);
       setCustomers(Array.isArray(res.data) ? res.data : []);
-      console.log("Fetched customers data:", res.data); // Debugging: Check what data is received
     } catch (error) {
-      console.error("❌ [FRONTEND] Error fetching customers", error);
+      console.error("Error fetching customers", error);
     }
   };
-
 
   const filteredCustomers = customers.filter(c => 
     c.mobile && c.mobile.includes(searchTerm)
   );
-  console.log("Filtered customers for display:", filteredCustomers); // Debugging: Check what data is being displayed
 
   return (
-    <div className="p-6">
+    <div className="min-h-screen bg-gray-100 p-6 text-black">
       <AdminNavbar />
-      <h1 className="text-3xl font-bold mb-6">Customer Rewards</h1>
+      <h1 className="text-4xl font-black mb-8 border-b-4 border-black pb-2 uppercase tracking-tighter">Customer Rewards</h1>
 
-      <div className="mb-6">
+      <div className="mb-8">
+        <label className="block font-black mb-2 uppercase text-xl text-gray-700">Search Customer</label>
         <input 
           type="text" 
-          placeholder="🔍 Search by Mobile Number..." 
-          className="w-full md:w-1/3 p-4 border rounded-xl shadow-sm focus:ring-2 focus:ring-green-500 outline-none"
+          placeholder="🔍 Type Mobile Number..."
+          className="w-full md:w-1/2 bg-white border-4 border-black p-5 rounded-2xl text-3xl font-black shadow-lg outline-none"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
         />
       </div>
 
-      <div className="bg-white shadow-lg rounded-2xl p-4 sm:p-6 overflow-x-auto">
-        <table className="w-full">
-          <thead>
-            <tr className="border-b bg-gray-50">
-              <th className="text-left p-4">Mobile Number</th>
-              <th className="text-left p-4">Reward Balance</th>
-              <th className="text-left p-4">Total Purchases</th>
-              <th className="text-left p-4">Total Spent</th>
+      <div className="bg-white rounded-3xl shadow-2xl overflow-hidden border-4 border-black">
+        <table className="w-full text-left">
+          <thead className="bg-black text-white">
+            <tr>
+              <th className="p-6 text-xl font-black uppercase">Mobile Number</th>
+              <th className="p-6 text-xl font-black uppercase">Reward Balance</th>
+              <th className="p-6 text-xl font-black uppercase">Total Purchases</th>
+              <th className="p-6 text-xl font-black uppercase text-right">Total Spent</th>
             </tr>
           </thead>
-          <tbody>
+          <tbody className="divide-y-4 divide-gray-100">
             {filteredCustomers.length > 0 ? (
-              filteredCustomers.map((customer) => (
-                <tr key={customer._id} className="border-b hover:bg-gray-50 transition-colors">
-                  <td className="p-4 font-semibold">{customer.mobile}</td>
-                  <td className="p-4">
-                    <span className="bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full font-bold">
-                      {customer.rewardPoints} pts
+              filteredCustomers.map((customer, index) => (
+                <tr key={customer._id} className={`${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'} hover:bg-yellow-50 transition-colors`}>
+                  <td className="p-6 text-2xl font-black tracking-widest">{customer.mobile}</td>
+                  <td className="p-6">
+                    <span className="bg-yellow-400 text-black px-6 py-2 rounded-full font-black text-xl border-2 border-black">
+                      {customer.rewardPoints} PTS
                     </span>
                   </td>
-                  <td className="p-4">{customer.purchaseCount || 0} orders</td>
-                  <td className="p-4 font-mono">₹{(customer.totalSpent || 0).toFixed(2)}</td>
+                  <td className="p-6 text-xl font-bold">{customer.purchaseCount || 0} Orders</td>
+                  <td className="p-6 text-right text-2xl font-black text-green-700">₹{(customer.totalSpent || 0).toFixed(2)}</td>
                 </tr>
               ))
             ) : (
-              <tr><td colSpan="4" className="p-10 text-center text-gray-500">No customers found matching your search.</td></tr>
+              <tr><td colSpan="4" className="p-20 text-center text-3xl font-black text-gray-300 italic uppercase">No customers found</td></tr>
             )}
           </tbody>
         </table>
