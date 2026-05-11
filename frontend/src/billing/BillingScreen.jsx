@@ -9,6 +9,7 @@ const BillingScreen = () => {
   const [walletPoints, setWalletPoints] = useState(0);
   const [loading, setLoading] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
+  const [alert, setAlert] = useState({ show: false, message: "" });
 
   useEffect(() => {
     fetchProductsData();
@@ -114,15 +115,15 @@ Final Total : ₹${finalTotal}
   };
 
   const saveOrderAction = async () => {
-    if (cart.length === 0) return alert("Add products");
+    if (cart.length === 0) return setAlert({ show: true, message: "Add products to cart first!" });
     try {
       setLoading(true);
       printBill();
       await createOrder({ mobile, items: cart });
-      alert("Order Saved Successfully");
+      setAlert({ show: true, message: "Order Saved Successfully!" });
       clearBill();
     } catch (error) {
-      alert("Error saving order");
+      setAlert({ show: true, message: "Error saving order. Try again." });
     } finally {
       setLoading(false);
     }
@@ -243,6 +244,22 @@ Final Total : ₹${finalTotal}
           </div>
         </div>
       </div>
+
+      {/* CUSTOM ALERT MODAL */}
+      {alert.show && (
+        <div className="fixed inset-0 flex items-center justify-center z-[100] bg-black/60 backdrop-blur-sm p-4">
+          <div className="bg-white p-6 rounded-2xl max-w-sm w-full shadow-2xl text-center border border-gray-100">
+            <h2 className="text-2xl font-bold mb-2 text-orange-600">Fruteria</h2>
+            <p className="text-gray-700 mb-6 font-medium">{alert.message}</p>
+            <button 
+              onClick={() => setAlert({ show: false, message: "" })}
+              className="w-full bg-orange-600 text-white py-2.5 rounded-xl font-bold hover:bg-orange-700 transition-colors"
+            >
+              OK
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

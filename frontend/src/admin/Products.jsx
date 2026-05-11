@@ -7,6 +7,8 @@ const Products = () => {
   const [form, setForm] = useState({ id: "", name: "", price: "", category: "Juice" });
   const [editing, setEditing] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const [alert, setAlert] = useState({ show: false, message: "" });
+  const [confirm, setConfirm] = useState({ show: false, id: null });
 
   useEffect(() => { fetchProductsData(); }, []);
 
@@ -20,20 +22,20 @@ const Products = () => {
   };
 
   const saveProductAction = async () => {
-    if (!form.name || !form.price) return alert("Enter all fields");
+    if (!form.name || !form.price) return setAlert({ show: true, message: "Please fill all fields" });
     try {
       if (editing) {
         await updateProduct(form.id, form);
-        alert("Product Updated");
+        setAlert({ show: true, message: "Product Updated Successfully" });
       } else {
         await addProduct(form);
-        alert("Product Added");
+        setAlert({ show: true, message: "Product Added Successfully" });
       }
       setForm({ id: "", name: "", price: "", category: "Juice" });
       setEditing(false);
       fetchProductsData();
     } catch (error) {
-      alert("Error Saving Product");
+      setAlert({ show: true, message: "Error Saving Product" });
     }
   };
 
@@ -43,12 +45,12 @@ const Products = () => {
   };
 
   const deleteProductAction = async (id) => {
-    if (!window.confirm("Delete this product?")) return;
     try {
       await deleteProduct(id);
       fetchProductsData();
+      setConfirm({ show: false, id: null });
     } catch (error) {
-      alert("Error deleting product");
+      setAlert({ show: true, message: "Error deleting product" });
     }
   };
 
@@ -147,7 +149,7 @@ const Products = () => {
                 <td className="p-5 text-center">
                   <div className="flex justify-center gap-3">
                     <button onClick={() => editProduct(product)} className="bg-blue-600 text-white px-6 py-2 rounded-xl font-black hover:bg-blue-500 active:scale-90 transition-all">EDIT</button>
-                    <button onClick={() => deleteProductAction(product._id)} className="bg-red-600 text-white px-6 py-2 rounded-xl font-black hover:bg-red-500 active:scale-90 transition-all">DELETE</button>
+                    <button onClick={() => setConfirm({ show: true, id: product._id })} className="bg-red-600 text-white px-6 py-2 rounded-xl font-black hover:bg-red-500 active:scale-90 transition-all">DELETE</button>
                   </div>
                 </td>
               </tr>
@@ -155,6 +157,36 @@ const Products = () => {
           </tbody>
         </table>
       </div>
+
+      {/* CUSTOM ALERT */}
+      {alert.show && (
+        <div className="fixed inset-0 flex items-center justify-center z-[100] bg-black/60 backdrop-blur-sm p-4">
+          <div className="bg-white p-6 rounded-2xl max-w-sm w-full shadow-2xl text-center border border-gray-100">
+            <h2 className="text-2xl font-bold mb-2 text-orange-600">Fruteria</h2>
+            <p className="text-gray-700 mb-6 font-medium">{alert.message}</p>
+            <button onClick={() => setAlert({ show: false, message: "" })} className="w-full bg-orange-600 text-white py-2.5 rounded-xl font-bold hover:bg-orange-700 transition-colors">OK</button>
+          </div>
+        </div>
+      )}
+
+      {/* CUSTOM CONFIRM */}
+      {confirm.show && (
+        <div className="fixed inset-0 flex items-center justify-center z-[100] bg-black/60 backdrop-blur-sm p-4">
+          <div className="bg-white p-6 rounded-2xl max-w-sm w-full shadow-2xl text-center border border-gray-100">
+            <h2 className="text-2xl font-bold mb-2 text-red-600">Confirm Delete</h2>
+            <p className="text-gray-700 mb-6 font-medium">Are you sure you want to delete this product?</p>
+            <div className="flex gap-4">
+              <button 
+                onClick={() => deleteProductAction(confirm.id)} 
+                className="flex-1 bg-red-600 text-white py-2.5 rounded-xl font-bold hover:bg-red-700 transition-colors"
+              >
+                YES
+              </button>
+              <button onClick={() => setConfirm({ show: false, id: null })} className="flex-1 bg-gray-100 text-gray-700 py-2.5 rounded-xl font-bold hover:bg-gray-200 transition-colors">NO</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
