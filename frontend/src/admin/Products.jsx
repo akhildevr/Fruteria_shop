@@ -25,12 +25,16 @@ const Products = () => {
 
 
   const fetchProducts = async () => {
-
-    const res = await axios.get(
-      `${import.meta.env.VITE_API_URL}/api/products`
-    );
-
-    setProducts(res.data);
+    try {
+      console.log("🔄 [FRONTEND] GET /api/products - Fetching products...");
+      const res = await axios.get(
+        `${import.meta.env.VITE_API_URL}/api/products`
+      );
+      console.log("✅ [FRONTEND] Products received:", res.data.length, "items");
+      setProducts(res.data);
+    } catch (error) {
+      console.error("❌ [FRONTEND] Fetch products failed:", error.message);
+    }
   };
 
 
@@ -47,30 +51,23 @@ const Products = () => {
 
       // UPDATE
       if (editing) {
-
+        console.log("✏️ [FRONTEND] PUT /api/products/" + form.id + " - Updating product...");
         await axios.put(
-
           `${import.meta.env.VITE_API_URL}/api/products/${form.id}`,
-
           form
         );
-
+        console.log("✅ [FRONTEND] Product updated successfully");
         alert("Product Updated");
-
       }
-
       // CREATE
       else {
-
+        console.log("📝 [FRONTEND] POST /api/products - Creating product...");
         await axios.post(
-
           `${import.meta.env.VITE_API_URL}/api/products`,
-
           form
         );
-
+        console.log("✅ [FRONTEND] Product added successfully");
         alert("Product Added");
-
       }
 
 
@@ -85,13 +82,10 @@ const Products = () => {
       setEditing(false);
 
       fetchProducts();
-
     } catch (error) {
-
+      console.error("❌ [FRONTEND] Save product failed:", error.message);
       alert("Error Saving Product");
-
     }
-
   };
 
 
@@ -124,13 +118,17 @@ const Products = () => {
       );
 
     if (!confirmDelete) return;
-
-    await axios.delete(
-
-      `${import.meta.env.VITE_API_URL}/api/products/${id}`
-    );
-
-    fetchProducts();
+    try {
+      console.log("🗑️ [FRONTEND] DELETE /api/products/" + id + " - Deleting product...");
+      await axios.delete(
+        `${import.meta.env.VITE_API_URL}/api/products/${id}`
+      );
+      console.log("✅ [FRONTEND] Product deleted successfully");
+      fetchProducts();
+    } catch (error) {
+      console.error("❌ [FRONTEND] Delete product failed:", error.message);
+      alert("Error deleting product");
+    }
   };
 
 

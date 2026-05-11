@@ -25,11 +25,16 @@ const BillingScreen = () => {
 
   const fetchProducts = async () => {
 
-    const res = await axios.get(
-      `${import.meta.env.VITE_API_URL}/api/products`
-    );
-
-    setProducts(res.data);
+    try {
+      console.log("🔄 [FRONTEND] GET /api/products - Fetching products...");
+      const res = await axios.get(
+        `${import.meta.env.VITE_API_URL}/api/products`
+      );
+      console.log("✅ [FRONTEND] Products received:", res.data.length, "items");
+      setProducts(res.data);
+    } catch (error) {
+      console.error("❌ [FRONTEND] Fetch products failed:", error.message);
+    }
   };
 
 
@@ -49,19 +54,18 @@ const BillingScreen = () => {
   const fetchCustomer = async (number) => {
 
     try {
-
+      console.log("🔄 [FRONTEND] GET /api/customers/" + number + " - Fetching customer...");
       const res = await axios.get(
         `${import.meta.env.VITE_API_URL}/api/customers/${number}`
       );
-
+      console.log("✅ [FRONTEND] Customer response:", res.data);
       setWalletPoints(
         res.data.rewardPoints || 0
       );
 
-    } catch {
-
+    } catch (error) {
+      console.error("❌ [FRONTEND] Fetch customer failed:", error.message);
       setWalletPoints(0);
-
     }
   };
 
@@ -271,7 +275,8 @@ ${receipt}
     try {
 
       setLoading(true);
-
+      console.log("📝 [FRONTEND] POST /api/orders - Creating order...");
+      console.log("💳 [FRONTEND] Order data:", { mobile, items: cart.length + " items" });
       await axios.post(
         `${import.meta.env.VITE_API_URL}/api/orders`,
         {
@@ -279,6 +284,7 @@ ${receipt}
           items: cart
         }
       );
+      console.log("✅ [FRONTEND] Order created successfully!");
 
       printBill();
 
@@ -287,7 +293,7 @@ ${receipt}
       clearBill();
 
     } catch (error) {
-
+      console.error("❌ [FRONTEND] Save order failed:", error.message);
       alert("Error saving order");
 
     } finally {

@@ -13,21 +13,25 @@ const Dashboard = () => {
 
   const fetchOrders = async () => {
     try {
+      console.log("🔄 [FRONTEND] GET /api/orders - Fetching orders...");
       const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/orders`);
+      console.log("✅ [FRONTEND] Orders received:", res.data.length, "orders");
       setOrders(res.data);
     } catch (error) {
-      console.error("Error fetching orders", error);
+      console.error("❌ [FRONTEND] Error fetching orders", error);
     }
   };
 
   const fetchTodaySales = async () => {
     try {
+      console.log("🔄 [FRONTEND] GET /api/analytics/today-sales - Fetching today's sales...");
       const res = await axios.get(
         `${import.meta.env.VITE_API_URL}/api/analytics/today-sales`
       );
+      console.log("✅ [FRONTEND] Today's sales received: ₹" + res.data.totalSales);
       setTodaySales(res.data.totalSales);
     } catch (error) {
-      console.error("Error fetching today's sales", error);
+      console.error("❌ [FRONTEND] Error fetching today's sales", error);
     }
   };
 

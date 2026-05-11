@@ -6,6 +6,9 @@ exports.createOrder = async (req, res) => {
 
   try {
 
+    console.log("📝 [API] POST /api/orders - Creating order...");
+    console.log("📥 [REQUEST] Mobile:", req.body.mobile, "Items:", req.body.items.length);
+
     const { mobile, items } = req.body;
 
     let subtotal = 0;
@@ -17,9 +20,13 @@ exports.createOrder = async (req, res) => {
     let customer = await Customer.findOne({ mobile });
 
     if (!customer) {
+      console.log("👤 [DB] Creating new customer:", mobile);
       customer = await Customer.create({
         mobile
       });
+      console.log("✅ [DB] New customer created:", customer._id);
+    } else {
+      console.log("👤 [DB] Existing customer found:", mobile);
     }
 
     let rewardUsed = 0;
@@ -58,8 +65,10 @@ exports.createOrder = async (req, res) => {
     customer.totalSpent += finalTotal;
 
     await customer.save();
+    console.log("✅ [DB] Customer updated - Purchase count:", customer.purchaseCount, "Total spent:", customer.totalSpent, "Reward points:", customer.rewardPoints);
 
     const billId = generateBillId();
+    console.log("🧾 [BILLID] Generated:", billId);
 
     const order = await Order.create({
 
@@ -82,7 +91,9 @@ exports.createOrder = async (req, res) => {
       finalTotal
 
     });
+    console.log("✅ [DB] Order saved successfully:", order._id);
 
+    console.log("✅ [SUCCESS] Order created! Bill ID:", order.billId, "Final Total:", order.finalTotal);
     res.json({
       success: true,
       order,
@@ -96,6 +107,7 @@ exports.createOrder = async (req, res) => {
 
   } catch (error) {
 
+    console.error("❌ [ERROR] Order creation failed:", error.message);
     res.status(500).json({
       error: error.message
     });
@@ -104,9 +116,12 @@ exports.createOrder = async (req, res) => {
 
 exports.getOrders = async (req, res) => {
  try {
+    console.log("📖 [API] GET /api/orders - Fetching all orders...");
     const orders = await Order.find().sort({ createdAt: -1 });
+    console.log("✅ [DB] Found", orders.length, "orders");
     res.json(orders);
   } catch (error) {
+    console.error("❌ [ERROR] Failed to fetch orders:", error.message);
     res.status(500).json({ error: error.message });
   }
 };

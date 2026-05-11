@@ -2,29 +2,42 @@ const Order = require("../models/Order");
 
 exports.todaySales = async (req, res) => {
 
-  const start = new Date();
+  try {
 
-  start.setHours(0, 0, 0, 0);
+    console.log("📊 [API] GET /api/analytics/today-sales - Fetching today's sales...");
 
-  const end = new Date();
+    const start = new Date();
 
-  end.setHours(23, 59, 59, 999);
+    start.setHours(0, 0, 0, 0);
 
-  const orders = await Order.find({
-    createdAt: {
-      $gte: start,
-      $lte: end
-    }
-  });
+    const end = new Date();
 
-  const totalSales = orders.reduce(
-    (sum, order) =>
-      sum + order.finalTotal,
-    0
-  );
+    end.setHours(23, 59, 59, 999);
 
-  res.json({
-    totalSales,
-    totalOrders: orders.length
-  });
+    const orders = await Order.find({
+      createdAt: {
+        $gte: start,
+        $lte: end
+      }
+    });
+
+    const totalSales = orders.reduce(
+      (sum, order) =>
+        sum + order.finalTotal,
+      0
+    );
+
+    console.log("✅ [DB] Today's sales calculated - Total: ₹" + totalSales, "Orders:", orders.length);
+
+    res.json({
+      totalSales,
+      totalOrders: orders.length
+    });
+
+  } catch (error) {
+
+    console.error("❌ [ERROR] Analytics fetch failed:", error.message);
+    res.status(500).json({ error: error.message });
+
+  }
 };

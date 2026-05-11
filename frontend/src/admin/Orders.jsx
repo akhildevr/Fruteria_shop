@@ -11,10 +11,12 @@ const Orders = () => {
 
   const fetchOrders = async () => {
     try {
+      console.log("🔄 [FRONTEND] GET /api/orders - Fetching all orders...");
       const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/orders`);
+      console.log("✅ [FRONTEND] Orders received:", res.data.length, "orders");
       setOrders(res.data);
     } catch (error) {
-      console.error("Error fetching orders", error);
+      console.error("❌ [FRONTEND] Error fetching orders", error);
     }
   };
 
