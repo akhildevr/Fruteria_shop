@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import axios from "axios";
+import { fetchProducts, fetchCustomer, createOrder } from "../utils/api";
 
 const BillingScreen = () => {
 
@@ -15,21 +15,21 @@ const BillingScreen = () => {
 
   const [loading, setLoading] = useState(false);
 
+  const [showDropdown, setShowDropdown] = useState(false);
+
 
   // FETCH PRODUCTS
   useEffect(() => {
 
-    fetchProducts();
+    fetchProductsData();
 
   }, []);
 
-  const fetchProducts = async () => {
+  const fetchProductsData = async () => {
 
     try {
-      console.log("🔄 [FRONTEND] GET /api/products - Fetching products...");
-      const res = await axios.get(
-        `${import.meta.env.VITE_API_URL}/api/products`
-      );
+      console.log("🔄 [FRONTEND] Fetching products...");
+      const res = await fetchProducts();
       console.log("✅ [FRONTEND] Products received:", res.data.length, "items");
       setProducts(res.data);
     } catch (error) {
@@ -51,13 +51,11 @@ const BillingScreen = () => {
 
 
   // FETCH CUSTOMER REWARD POINTS
-  const fetchCustomer = async (number) => {
+  const fetchCustomerData = async (number) => {
 
     try {
-      console.log("🔄 [FRONTEND] GET /api/customers/" + number + " - Fetching customer...");
-      const res = await axios.get(
-        `${import.meta.env.VITE_API_URL}/api/customers/${number}`
-      );
+      console.log("🔄 [FRONTEND] Fetching customer " + number + "...");
+      const res = await fetchCustomer(number);
       console.log("✅ [FRONTEND] Customer response:", res.data);
       setWalletPoints(
         res.data.rewardPoints || 0
@@ -79,7 +77,7 @@ const BillingScreen = () => {
 
     if (value.length >= 10) {
 
-      fetchCustomer(value);
+      fetchCustomerData(value);
 
     }
   };
@@ -275,15 +273,11 @@ ${receipt}
     try {
 
       setLoading(true);
-      console.log("📝 [FRONTEND] POST /api/orders - Creating order...");
-      console.log("💳 [FRONTEND] Order data:", { mobile, items: cart.length + " items" });
-      await axios.post(
-        `${import.meta.env.VITE_API_URL}/api/orders`,
-        {
-          mobile,
-          items: cart
-        }
-      );
+      console.log("📝 [FRONTEND] Creating order...");
+      await createOrder({
+        mobile,
+        items: cart
+      });
       console.log("✅ [FRONTEND] Order created successfully!");
 
       printBill();
@@ -363,70 +357,85 @@ ${receipt}
 
         {/* SEARCH */}
 
-        <div className="mb-5">
+        <div className="mb-5 relative">
 
           <label className="font-semibold">
             Search Product
           </label>
 
-          <div className="relative">
-
-            <input
-              type="text"
-              value={search}
-              onChange={(e) =>
-                setSearch(e.target.value)
-              }
-              placeholder="🔍 Search Product..."
-              className="w-full border p-4 rounded-xl mt-2"
-            />
-
-          </div>
-
-        </div>
+          <input
+            type="text"
+            value={search}
+            onFocus={() => setShowDropdown(true)}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              setShowDropdown(true);
+            }}
+            placeholder="🔍 Search Product (e.g. Apple Juice)..."
+            className="w-full border p-4 rounded-xl mt-2 focus:ring-2 focus:ring-green-500 outline-none"
+          />
 
 
-        {/* SEARCH RESULTS */}
+          {/* DROPDOWN SEARCH RESULTS */}
 
-        {search && (
+          {showDropdown && (
 
-          <div className="border rounded-xl mb-6 max-h-60 overflow-y-auto">
+            <div className="absolute left-0 right-0 top-full mt-1 bg-white border rounded-xl shadow-2xl z-50 max-h-60 overflow-y-auto">
 
-            {filteredProducts.map(product => (
+              {filteredProducts.length > 0 ? (
 
-              <div
-                key={product._id}
-                className="flex justify-between items-center p-4 border-b"
-              >
+                filteredProducts.map(product => (
 
-                <div>
+                  <div
+                    key={product._id}
+                    className="flex justify-between items-center p-4 border-b hover:bg-gray-50 cursor-pointer transition-colors"
+                    onClick={() => {
+                      addToCart(product);
+                      setShowDropdown(false);
+                    }}
+                  >
 
-                  <h2 className="font-semibold">
-                    {product.name}
-                  </h2>
+                    <div>
 
-                  <p>
-                    ₹{product.price}
-                  </p>
+                      <h2 className="font-bold text-lg">
+                        {product.name}
+                      </h2>
 
+                      <p className="text-gray-500">
+                        {product.category} • ₹{product.price}
+                      </p>
+
+                    </div>
+
+                    <div className="bg-green-100 text-green-600 font-bold px-3 py-1 rounded-lg">
+                      Add +
+                    </div>
+
+                  </div>
+
+                ))
+
+              ) : (
+
+                <div className="p-4 text-center text-gray-500">
+                  No products found for "{search}"
                 </div>
 
-                <button
-                  onClick={() =>
-                    addToCart(product)
-                  }
-                  className="bg-green-500 text-white w-10 h-10 rounded-full text-xl"
-                >
-                  +
-                </button>
+              )}
 
-              </div>
+            </div>
 
-            ))}
+          )}
 
-          </div>
+          {/* CLOSE DROPDOWN ON CLICK OUTSIDE (HANDLED BY BUTTON OR OVERLAY) */}
+          {showDropdown && (
+            <div
+              className="fixed inset-0 z-40"
+              onClick={() => setShowDropdown(false)}
+            ></div>
+          )}
 
-        )}
+        </div>
 
 
         {/* CART */}

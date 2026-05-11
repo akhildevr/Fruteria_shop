@@ -1,18 +1,18 @@
 import { useEffect, useState } from "react";
-import axios from "axios";
+import { fetchOrders } from "../utils/api";
 import AdminNavbar from "./AdminNavbar";
 
 const Orders = () => {
   const [orders, setOrders] = useState([]);
 
   useEffect(() => {
-    fetchOrders();
+    fetchOrdersData();
   }, []);
 
-  const fetchOrders = async () => {
+  const fetchOrdersData = async () => {
     try {
-      console.log("🔄 [FRONTEND] GET /api/orders - Fetching all orders...");
-      const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/orders`);
+      console.log("🔄 [FRONTEND] Fetching all orders...");
+      const res = await fetchOrders();
       console.log("✅ [FRONTEND] Orders received:", res.data.length, "orders");
       setOrders(res.data);
     } catch (error) {

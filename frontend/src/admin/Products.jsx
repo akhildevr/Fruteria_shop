@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import axios from "axios";
+import { fetchProducts, addProduct, updateProduct, deleteProduct } from "../utils/api";
 import AdminNavbar from "./AdminNavbar";
 
 const Products = () => {
@@ -19,17 +19,15 @@ const Products = () => {
   // FETCH PRODUCTS
   useEffect(() => {
 
-    fetchProducts();
+    fetchProductsData();
 
   }, []);
 
 
-  const fetchProducts = async () => {
+  const fetchProductsData = async () => {
     try {
-      console.log("🔄 [FRONTEND] GET /api/products - Fetching products...");
-      const res = await axios.get(
-        `${import.meta.env.VITE_API_URL}/api/products`
-      );
+      console.log("🔄 [FRONTEND] Fetching products...");
+      const res = await fetchProducts();
       console.log("✅ [FRONTEND] Products received:", res.data.length, "items");
       setProducts(res.data);
     } catch (error) {
@@ -51,21 +49,15 @@ const Products = () => {
 
       // UPDATE
       if (editing) {
-        console.log("✏️ [FRONTEND] PUT /api/products/" + form.id + " - Updating product...");
-        await axios.put(
-          `${import.meta.env.VITE_API_URL}/api/products/${form.id}`,
-          form
-        );
+        console.log("✏️ [FRONTEND] Updating product...");
+        await updateProduct(form.id, form);
         console.log("✅ [FRONTEND] Product updated successfully");
         alert("Product Updated");
       }
       // CREATE
       else {
-        console.log("📝 [FRONTEND] POST /api/products - Creating product...");
-        await axios.post(
-          `${import.meta.env.VITE_API_URL}/api/products`,
-          form
-        );
+        console.log("📝 [FRONTEND] Adding product...");
+        await addProduct(form);
         console.log("✅ [FRONTEND] Product added successfully");
         alert("Product Added");
       }
@@ -81,7 +73,7 @@ const Products = () => {
 
       setEditing(false);
 
-      fetchProducts();
+      fetchProductsData();
     } catch (error) {
       console.error("❌ [FRONTEND] Save product failed:", error.message);
       alert("Error Saving Product");
@@ -110,7 +102,7 @@ const Products = () => {
 
 
   // DELETE PRODUCT
-  const deleteProduct = async (id) => {
+  const handleDeleteProduct = async (id) => {
 
     const confirmDelete =
       window.confirm(
@@ -119,12 +111,10 @@ const Products = () => {
 
     if (!confirmDelete) return;
     try {
-      console.log("🗑️ [FRONTEND] DELETE /api/products/" + id + " - Deleting product...");
-      await axios.delete(
-        `${import.meta.env.VITE_API_URL}/api/products/${id}`
-      );
+      console.log("🗑️ [FRONTEND] Deleting product...");
+      await deleteProduct(id);
       console.log("✅ [FRONTEND] Product deleted successfully");
-      fetchProducts();
+      fetchProductsData();
     } catch (error) {
       console.error("❌ [FRONTEND] Delete product failed:", error.message);
       alert("Error deleting product");
@@ -323,7 +313,7 @@ const Products = () => {
 
                   <button
                     onClick={() =>
-                      deleteProduct(product._id)
+                      handleDeleteProduct(product._id)
                     }
                     className="bg-red-500 text-white px-4 py-2 rounded-lg"
                   >

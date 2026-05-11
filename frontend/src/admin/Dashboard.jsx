@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import axios from "axios";
+import { fetchOrders, fetchTodaySales } from "../utils/api";
 import AdminNavbar from "./AdminNavbar";
 
 const Dashboard = () => {
@@ -7,14 +7,14 @@ const Dashboard = () => {
   const [todaySales, setTodaySales] = useState(0);
 
   useEffect(() => {
-    fetchOrders();
-    fetchTodaySales();
+    fetchOrdersData();
+    fetchTodaySalesData();
   }, []);
 
-  const fetchOrders = async () => {
+  const fetchOrdersData = async () => {
     try {
-      console.log("🔄 [FRONTEND] GET /api/orders - Fetching orders...");
-      const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/orders`);
+      console.log("🔄 [FRONTEND] Fetching all orders...");
+      const res = await fetchOrders();
       console.log("✅ [FRONTEND] Orders received:", res.data.length, "orders");
       setOrders(res.data);
     } catch (error) {
@@ -22,12 +22,10 @@ const Dashboard = () => {
     }
   };
 
-  const fetchTodaySales = async () => {
+  const fetchTodaySalesData = async () => {
     try {
-      console.log("🔄 [FRONTEND] GET /api/analytics/today-sales - Fetching today's sales...");
-      const res = await axios.get(
-        `${import.meta.env.VITE_API_URL}/api/analytics/today-sales`
-      );
+      console.log("🔄 [FRONTEND] Fetching today's sales...");
+      const res = await fetchTodaySales();
       console.log("✅ [FRONTEND] Today's sales received: ₹" + res.data.totalSales);
       setTodaySales(res.data.totalSales);
     } catch (error) {
