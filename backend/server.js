@@ -22,7 +22,7 @@ const io = new Server(server, {
 app.use(cors({
   origin: [
     'https://fruteria-shop.onrender.com',
-    'https://fruteria-shop.vercel.app',
+    'https://fruteria-shop-git-master-akhil-r-s-projects.vercel.app',
     'http://localhost:5173'
   ]
 }));
