@@ -42,24 +42,24 @@ const Customers = () => {
           <table className="w-full text-left">
             <thead className="bg-slate-900 text-slate-100">
               <tr>
-                <th className="p-4 sm:p-6 text-sm sm:text-lg font-black uppercase">Mobile Number</th>
-                <th className="p-4 sm:p-6 text-sm sm:text-lg font-black uppercase">Reward Balance</th>
-                <th className="p-4 sm:p-6 text-sm sm:text-lg font-black uppercase">Total Purchases</th>
-                <th className="p-4 sm:p-6 text-sm sm:text-lg font-black uppercase text-right">Total Spent</th>
+                <th className="p-3 sm:p-4 uppercase font-black text-sm sm:text-base">Mobile Number</th>
+                <th className="p-3 sm:p-4 uppercase font-black text-sm sm:text-base">Reward Balance</th>
+                <th className="p-3 sm:p-4 uppercase font-black text-sm sm:text-base">Total Purchases</th>
+                <th className="p-3 sm:p-4 uppercase font-black text-sm sm:text-base text-right">Total Spent</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-700">
               {filteredCustomers.length > 0 ? (
                 filteredCustomers.map((customer, index) => (
                   <tr key={customer._id} className={`${index % 2 === 0 ? 'bg-slate-950/50' : 'bg-slate-900/50'} hover:bg-slate-800/50 transition-colors`}>
-                    <td className="p-4 sm:p-6 text-lg sm:text-xl font-black tracking-widest text-slate-100">{customer.mobile}</td>
-                    <td className="p-4 sm:p-6">
-                      <span className="bg-gradient-to-r from-amber-400 to-yellow-500 text-slate-950 px-4 sm:px-6 py-2 rounded-full font-black text-sm sm:text-lg border border-amber-300/50">
+                    <td className="p-3 sm:p-4 font-semibold text-sm sm:text-base tracking-widest text-slate-100">{customer.mobile}</td>
+                    <td className="p-3 sm:p-4">
+                      <span className="bg-gradient-to-r from-amber-400 to-yellow-500 text-slate-950 px-3 py-1 rounded-full font-black text-xs sm:text-sm border border-amber-300/50">
                         {customer.rewardPoints} PTS
                       </span>
                     </td>
-                    <td className="p-4 sm:p-6 text-sm sm:text-lg font-semibold text-slate-100">{customer.purchaseCount || 0} Orders</td>
-                    <td className="p-4 sm:p-6 text-right text-lg sm:text-xl font-black text-emerald-300">₹{(customer.totalSpent || 0).toFixed(2)}</td>
+                    <td className="p-3 sm:p-4 font-semibold text-sm sm:text-base text-slate-100">{customer.purchaseCount || 0} Orders</td>
+                    <td className="p-3 sm:p-4 text-right font-bold text-sm sm:text-base text-emerald-300">₹{(customer.totalSpent || 0).toFixed(2)}</td>
                   </tr>
                 ))
               ) : (

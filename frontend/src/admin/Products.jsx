@@ -135,21 +135,21 @@ const Products = () => {
           <table className="w-full text-left">
             <thead className="bg-slate-900 text-slate-100">
               <tr>
-                <th className="p-3 sm:p-5 text-sm sm:text-lg font-black uppercase">Product</th>
-                <th className="p-3 sm:p-5 text-sm sm:text-lg font-black uppercase">Category</th>
-                <th className="p-3 sm:p-5 text-sm sm:text-lg font-black uppercase text-right">Price</th>
-                <th className="p-3 sm:p-5 text-sm sm:text-lg font-black uppercase text-center">Actions</th>
+                <th className="p-3 sm:p-4 uppercase font-black text-sm sm:text-base">Product</th>
+                <th className="p-3 sm:p-4 uppercase font-black text-sm sm:text-base">Category</th>
+                <th className="p-3 sm:p-4 uppercase font-black text-sm sm:text-base text-right">Price</th>
+                <th className="p-3 sm:p-4 uppercase font-black text-sm sm:text-base text-center">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-700">
               {filteredProducts.map((product, index) => (
                 <tr key={product._id} className={`${index % 2 === 0 ? 'bg-slate-950/50' : 'bg-slate-900/50'} hover:bg-slate-800/50 transition-colors`}>
-                  <td className="p-3 sm:p-5 text-lg sm:text-xl font-black text-slate-100">{product.name}</td>
-                  <td className="p-3 sm:p-5 text-sm sm:text-base uppercase text-slate-400">{product.category}</td>
-                  <td className="p-3 sm:p-5 text-lg sm:text-xl font-black text-right text-emerald-300">₹{product.price}</td>
-                  <td className="p-3 sm:p-5 text-center">
+                  <td className="p-3 sm:p-4 font-semibold text-slate-100 text-sm sm:text-base">{product.name}</td>
+                  <td className="p-3 sm:p-4 font-semibold text-sm sm:text-base uppercase text-slate-400">{product.category}</td>
+                  <td className="p-3 sm:p-4 font-bold text-right text-sm sm:text-base text-emerald-300">₹{product.price}</td>
+                  <td className="p-3 sm:p-4 text-center">
                     <div className="flex flex-col sm:flex-row justify-center gap-2 sm:gap-3">
-                      <button onClick={() => editProduct(product)} className="premium-button bg-gradient-to-r from-amber-400 via-amber-300 to-yellow-400 text-slate-950 px-4 py-2 rounded-xl font-bold hover:from-amber-300 hover:to-yellow-300 transition-all text-sm sm:text-base">EDIT</button>
+                      <button onClick={() => editProduct(product)} className="premium-button bg-gradient-to-r from-cyan-400 via-sky-400 to-blue-500 text-slate-950 px-4 py-2 rounded-xl font-bold hover:from-cyan-300 hover:to-blue-400 transition-all text-sm sm:text-base">EDIT</button>
                       <button onClick={() => setConfirm({ show: true, id: product._id })} className="premium-button bg-gradient-to-r from-rose-400 to-red-500 text-slate-950 px-4 py-2 rounded-xl font-bold hover:from-rose-300 hover:to-red-400 transition-all text-sm sm:text-base">DELETE</button>
                     </div>
                   </td>

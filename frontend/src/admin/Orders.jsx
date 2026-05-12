@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
-import { fetchOrders } from "../utils/api";
+import { fetchOrders, deleteOrder } from "../utils/api";
 import AdminNavbar from "./AdminNavbar";
 
 const Orders = () => {
   const [orders, setOrders] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
+  const [confirm, setConfirm] = useState({ show: false, id: null });
 
   useEffect(() => { fetchOrdersData(); }, []);
 
@@ -38,6 +39,16 @@ THANK YOU
     printWindow.print();
   };
 
+  const deleteOrderAction = async (id) => {
+    try {
+      await deleteOrder(id);
+      fetchOrdersData();
+      setConfirm({ show: false, id: null });
+    } catch (error) {
+      console.error("Error deleting order", error);
+    }
+  };
+
   const filteredOrders = orders.filter(order => 
     (order.mobile && order.mobile.includes(searchTerm)) || 
     (order.billId && order.billId.toLowerCase().includes(searchTerm.toLowerCase()))
@@ -64,40 +75,48 @@ THANK YOU
           <table className="w-full text-left">
             <thead className="bg-slate-900 text-slate-100">
               <tr>
-                <th className="p-3 sm:p-5 text-sm sm:text-lg font-black uppercase">Date</th>
-                <th className="p-3 sm:p-5 text-sm sm:text-lg font-black uppercase">Customer</th>
-                <th className="p-3 sm:p-5 text-sm sm:text-lg font-black uppercase">Items Summary</th>
-                <th className="p-3 sm:p-5 text-sm sm:text-lg font-black uppercase text-right">Total</th>
-                <th className="p-3 sm:p-5 text-sm sm:text-lg font-black uppercase text-center">Action</th>
+                <th className="p-3 sm:p-4 uppercase font-black text-sm sm:text-base">Date</th>
+                <th className="p-3 sm:p-4 uppercase font-black text-sm sm:text-base">Customer</th>
+                <th className="p-3 sm:p-4 uppercase font-black text-sm sm:text-base">Items Summary</th>
+                <th className="p-3 sm:p-4 uppercase font-black text-sm sm:text-base text-right">Total</th>
+                <th className="p-3 sm:p-4 uppercase font-black text-sm sm:text-base text-center">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-700">
               {filteredOrders.map((order, index) => (
                 <tr key={order._id} className={`${index % 2 === 0 ? 'bg-slate-950/50' : 'bg-slate-900/50'} hover:bg-slate-800/50 transition-colors`}>
-                  <td className="p-3 sm:p-5 font-semibold text-slate-100 text-sm sm:text-base">{new Date(order.createdAt).toLocaleDateString()}</td>
-                  <td className="p-3 sm:p-5">
-                    <div className="font-black text-lg sm:text-xl tracking-tighter text-slate-100">{order.mobile || "GUEST"}</div>
-                    <div className="text-xs sm:text-sm font-medium text-slate-400 font-mono">{order.billId || order._id}</div>
+                  <td className="p-3 sm:p-4 font-semibold text-slate-100 text-sm sm:text-base">{new Date(order.createdAt).toLocaleDateString()}</td>
+                  <td className="p-3 sm:p-4">
+                    <div className="font-semibold text-slate-100 text-sm sm:text-base">{order.mobile || "GUEST"}</div>
+                    <div className="text-xs font-medium text-slate-400 font-mono">{order.billId || order._id}</div>
                   </td>
-                  <td className="p-3 sm:p-5">
-                    <div className="flex flex-wrap gap-2">
+                  <td className="p-3 sm:p-4">
+                    <div className="flex flex-wrap gap-1">
                       {order.items.map((item, i) => (
-                        <span key={i} className="bg-slate-700/70 text-slate-100 px-2 sm:px-3 py-1 rounded-lg text-xs sm:text-sm font-semibold border border-slate-600/50">
+                        <span key={i} className="bg-slate-700/70 text-slate-100 px-2 py-1 rounded text-xs font-semibold border border-slate-600/50">
                           {item.name} x{item.qty}
                         </span>
                       ))}
                     </div>
                   </td>
-                  <td className="p-3 sm:p-5 text-right">
-                    <div className="text-xl sm:text-2xl font-black text-emerald-300">₹{order.finalTotal}</div>
+                  <td className="p-3 sm:p-4 text-right">
+                    <div className="font-bold text-sm sm:text-base text-emerald-300">₹{order.finalTotal}</div>
                   </td>
-                  <td className="p-3 sm:p-5 text-center">
-                    <button
-                      onClick={() => printBill(order)}
-                      className="premium-button bg-gradient-to-r from-cyan-400 to-blue-500 text-slate-950 px-4 sm:px-6 py-2 sm:py-3 rounded-xl font-bold hover:from-cyan-300 hover:to-blue-400 transition-all text-sm sm:text-base"
-                    >
-                      PRINT 🖨️
-                    </button>
+                  <td className="p-3 sm:p-4 text-center">
+                    <div className="flex flex-col sm:flex-row justify-center gap-2 sm:gap-3">
+                      <button
+                        onClick={() => printBill(order)}
+                        className="premium-button bg-gradient-to-r from-cyan-400 to-blue-500 text-slate-950 px-4 py-2 rounded-xl font-bold hover:from-cyan-300 hover:to-blue-400 transition-all text-sm sm:text-base"
+                      >
+                        PRINT 🖨️
+                      </button>
+                      <button
+                        onClick={() => setConfirm({ show: true, id: order._id })}
+                        className="premium-button bg-gradient-to-r from-rose-400 to-red-500 text-slate-950 px-4 py-2 rounded-xl font-bold hover:from-rose-300 hover:to-red-400 transition-all text-sm sm:text-base"
+                      >
+                        DELETE 🗑️
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -105,6 +124,25 @@ THANK YOU
           </table>
         </div>
       </div>
+
+      {/* CUSTOM CONFIRM */}
+      {confirm.show && (
+        <div className="fixed inset-0 flex items-center justify-center z-[100] bg-black/60 backdrop-blur-sm p-4">
+          <div className="bg-white p-6 rounded-2xl max-w-sm w-full shadow-2xl text-center border border-gray-100">
+            <h2 className="text-2xl font-bold mb-2 text-red-600">Confirm Delete</h2>
+            <p className="text-gray-700 mb-6 font-medium">Are you sure you want to delete this order?</p>
+            <div className="flex gap-4">
+              <button 
+                onClick={() => deleteOrderAction(confirm.id)} 
+                className="flex-1 bg-red-600 text-white py-2.5 rounded-xl font-bold hover:bg-red-700 transition-colors"
+              >
+                YES
+              </button>
+              <button onClick={() => setConfirm({ show: false, id: null })} className="flex-1 bg-gray-100 text-gray-700 py-2.5 rounded-xl font-bold hover:bg-gray-200 transition-colors">NO</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
