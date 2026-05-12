@@ -134,3 +134,24 @@ exports.getOrders = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+
+exports.deleteOrder = async (req, res) => {
+  try {
+    console.log("🗑️  [API] DELETE /api/orders/:id - Deleting order...");
+    const { id } = req.params;
+    console.log("📥 [REQUEST] Order ID:", id);
+    
+    const order = await Order.findByIdAndDelete(id);
+    
+    if (!order) {
+      console.log("⚠️  [ERROR] Order not found:", id);
+      return res.status(404).json({ error: "Order not found" });
+    }
+    
+    console.log("✅ [DB] Order deleted successfully:", id);
+    res.json({ success: true, message: "Order deleted successfully", order });
+  } catch (error) {
+    console.error("❌ [ERROR] Failed to delete order:", error.message);
+    res.status(500).json({ error: error.message });
+  }
+};

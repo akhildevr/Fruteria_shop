@@ -4,10 +4,12 @@ const router = express.Router();
 
 const {
   createOrder,
-  getOrders
+  getOrders,
+  deleteOrder
 } = require("../controllers/orderController");
 
 router.post("/", createOrder);
 router.get("/", getOrders);
+router.delete("/:id", deleteOrder);
 
 module.exports = router;
