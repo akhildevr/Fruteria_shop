@@ -66,6 +66,111 @@ THANK YOU
     (order.billId && order.billId.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
+  const printSalesReport = () => {
+    const reportOrders = selectedDateOrders;
+    const reportRows = reportOrders.map((order, index) => {
+      const firstItem = order.items[0];
+      const firstRow = firstItem ? `
+          <tr>
+            <td>${order.billId || order._id}</td>
+            <td>${order.mobile || "GUEST"}</td>
+            <td>${firstItem.name}</td>
+            <td class="text-right">${firstItem.qty}</td>
+            <td class="text-right">₹${firstItem.price}</td>
+            <td class="text-right">₹${firstItem.qty * firstItem.price}</td>
+            <td class="text-right bold">₹${order.finalTotal}</td>
+          </tr>` : `
+          <tr>
+            <td>${order.billId || order._id}</td>
+            <td>${order.mobile || "GUEST"}</td>
+            <td colspan="3"></td>
+            <td class="text-right bold">₹${order.finalTotal}</td>
+          </tr>`;
+
+      const otherItems = order.items.slice(1).map(item => `
+          <tr>
+            <td></td>
+            <td></td>
+            <td>${item.name}</td>
+            <td class="text-right">${item.qty}</td>
+            <td class="text-right">₹${item.price}</td>
+            <td class="text-right">₹${item.qty * item.price}</td>
+            <td></td>
+          </tr>`).join("");
+
+      return `${firstRow}${otherItems}`;
+    }).join("");
+
+    const html = `
+      <html>
+        <head>
+          <title>Daily Sales Report</title>
+          <style>
+            @page { size: A4 portrait; margin: 18mm; }
+            body { font-family: Arial, sans-serif; color: #111; margin: 0; font-size: 11px; line-height: 1.25; }
+            .report-container { padding: 18px; }
+            .header { text-align: center; margin-bottom: 18px; }
+            .header h1 { margin: 0; font-size: 24px; letter-spacing: 1px; }
+            .header p { margin: 4px 0 0; font-size: 12px; color: #333; }
+            .summary { width: 100%; margin-bottom: 16px; border-collapse: collapse; }
+            .summary td { padding: 6px 8px; font-size: 12px; }
+            .summary .label { font-weight: bold; width: 140px; }
+            .report-table { width: 100%; border-collapse: collapse; font-size: 11px; }
+            .report-table th, .report-table td { border: 1px solid #ccc; padding: 6px 8px; }
+            .report-table th { background: #f5f5f5; text-align: left; }
+            .report-table .text-right { text-align: right; }
+            .report-table .bold { font-weight: bold; }
+            .report-table td:first-child, .report-table td:nth-child(2) { vertical-align: top; }
+            .footer { margin-top: 18px; font-size: 11px; }
+            .note { margin-top: 10px; color: #555; }
+          </style>
+        </head>
+        <body>
+          <div class="report-container">
+            <div class="header">
+              <h1>FRUTERIA</h1>
+              <p>Daily Sales Report</p>
+            </div>
+            <table class="summary">
+              <tr><td class="label">Report Date</td><td>${selectedDate}</td></tr>
+              <tr><td class="label">Total Orders</td><td>${reportOrders.length}</td></tr>
+              <tr><td class="label">Total Sales</td><td>₹${selectedDateSales.toFixed(2)}</td></tr>
+            </table>
+            <table class="report-table">
+              <thead>
+                <tr>
+                  <th>Bill</th>
+                  <th>Customer</th>
+                  <th>Item</th>
+                  <th class="text-right">Qty</th>
+                  <th class="text-right">Price</th>
+                  <th class="text-right">Amount</th>
+                  <th class="text-right">Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${reportRows}
+                <tr>
+                  <td colspan="6" class="text-right bold">Grand Total</td>
+                  <td class="text-right bold">₹${selectedDateSales.toFixed(2)}</td>
+                </tr>
+              </tbody>
+            </table>
+            <div class="footer">
+              <p class="bold">Report generated on: ${new Date().toLocaleString()}</p>
+              <p class="note">This report contains all orders for the selected date and provides a summary of sales totals and item details.</p>
+            </div>
+          </div>
+        </body>
+      </html>`;
+
+    const printWindow = window.open("", "_blank");
+    printWindow.document.write(html);
+    printWindow.document.close();
+    printWindow.focus();
+    printWindow.print();
+  };
+
   return (
     <div className="min-h-screen text-slate-100 px-3 py-4" style={{ background: "radial-gradient(circle at top, rgba(56,189,248,0.15), transparent 30%), linear-gradient(180deg, #020617 0%, #060d19 50%, #020616 100%)" }}>
       <AdminNavbar />
@@ -118,12 +223,20 @@ THANK YOU
                   onChange={(e) => setSelectedDate(e.target.value)}
                 />
                 {selectedDate && (
-                  <button
-                    onClick={() => setSelectedDate("")}
-                    className="premium-button-secondary bg-slate-900/95 text-slate-100 px-4 py-3 rounded-2xl font-bold border border-slate-600 shadow-lg hover:border-slate-400 transition-all text-sm sm:text-base"
-                  >
-                    Clear
-                  </button>
+                  <>
+                    <button
+                      onClick={() => setSelectedDate("")}
+                      className="premium-button-secondary bg-slate-900/95 text-slate-100 px-4 py-3 rounded-2xl font-bold border border-slate-600 shadow-lg hover:border-slate-400 transition-all text-sm sm:text-base"
+                    >
+                      Clear
+                    </button>
+                    <button
+                      onClick={printSalesReport}
+                      className="premium-button bg-gradient-to-r from-cyan-400 to-blue-500 text-slate-950 px-4 py-3 rounded-2xl font-bold shadow-lg hover:from-cyan-300 hover:to-blue-400 transition-all text-sm sm:text-base"
+                    >
+                      Print Day Report
+                    </button>
+                  </>
                 )}
               </div>
             </div>
