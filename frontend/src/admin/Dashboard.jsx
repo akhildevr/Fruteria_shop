@@ -68,56 +68,41 @@ THANK YOU
 
   const printSalesReport = () => {
     const reportOrders = selectedDateOrders;
-    const reportRows = reportOrders.map((order, index) => {
-      const firstItem = order.items[0];
-      const firstRow = firstItem ? `
-          <tr>
-            <td>${order.billId || order._id}</td>
-            <td>${order.mobile || "GUEST"}</td>
-            <td>${firstItem.name}</td>
-            <td class="text-right">${firstItem.qty}</td>
-            <td class="text-right">₹${firstItem.price}</td>
-            <td class="text-right">₹${firstItem.qty * firstItem.price}</td>
-            <td class="text-right bold">₹${order.finalTotal}</td>
-          </tr>` : `
-          <tr>
-            <td>${order.billId || order._id}</td>
-            <td>${order.mobile || "GUEST"}</td>
-            <td colspan="3"></td>
-            <td class="text-right bold">₹${order.finalTotal}</td>
-          </tr>`;
-
-      const otherItems = order.items.slice(1).map(item => `
-          <tr>
-            <td></td>
-            <td></td>
+    const reportRows = reportOrders.map((order) => 
+      order.items.map((item, i) => {
+        const isFirst = i === 0;
+        const isLast = i === order.items.length - 1;
+        return `
+          <tr class="${isLast ? 'bill-row-end' : ''}">
+            <td>${isFirst ? (order.billId || order._id) : ""}</td>
+            <td>${isFirst ? (order.mobile && order.mobile.toLowerCase() !== "guest" ? order.mobile : "Guest") : ""}</td>
             <td>${item.name}</td>
             <td class="text-right">${item.qty}</td>
             <td class="text-right">₹${item.price}</td>
             <td class="text-right">₹${item.qty * item.price}</td>
-            <td></td>
-          </tr>`).join("");
-
-      return `${firstRow}${otherItems}`;
-    }).join("");
+            <td class="text-right bold">${isLast ? `₹${order.finalTotal}` : ""}</td>
+          </tr>`;
+      }).join("")
+    ).join("");
 
     const html = `
       <html>
         <head>
-          <title>Daily Sales Report</title>
+          <title>Fruteria Sales Report</title>
           <style>
-            @page { size: A4 portrait; margin: 18mm; }
+            @page { size: auto; margin: 0mm; }
             body { font-family: Arial, sans-serif; color: #111; margin: 0; font-size: 11px; line-height: 1.25; }
-            .report-container { padding: 18px; }
+            .report-container { padding: 20mm; }
             .header { text-align: center; margin-bottom: 18px; }
             .header h1 { margin: 0; font-size: 24px; letter-spacing: 1px; }
             .header p { margin: 4px 0 0; font-size: 12px; color: #333; }
             .summary { width: 100%; margin-bottom: 16px; border-collapse: collapse; }
-            .summary td { padding: 6px 8px; font-size: 12px; }
+            .summary td { padding: 6px 8px; font-size: 12px; vertical-align: bottom; }
             .summary .label { font-weight: bold; width: 140px; }
             .report-table { width: 100%; border-collapse: collapse; font-size: 11px; }
-            .report-table th, .report-table td { border: 1px solid #ccc; padding: 6px 8px; }
-            .report-table th { background: #f5f5f5; text-align: left; }
+            .report-table th { border: 1px solid #ccc; border-bottom: 2px solid #888; padding: 6px 8px; vertical-align: bottom; background: #f5f5f5; text-align: left; }
+            .report-table td { padding: 6px 8px; vertical-align: bottom; border-left: 1px solid #ccc; border-right: 1px solid #ccc; }
+            .report-table tr.bill-row-end td { border-bottom: 1px solid #ccc; }
             .report-table .text-right { text-align: right; }
             .report-table .bold { font-weight: bold; }
             .report-table td:first-child, .report-table td:nth-child(2) { vertical-align: top; }
@@ -150,7 +135,7 @@ THANK YOU
               </thead>
               <tbody>
                 ${reportRows}
-                <tr>
+                <tr class="bill-row-end">
                   <td colspan="6" class="text-right bold">Grand Total</td>
                   <td class="text-right bold">₹${selectedDateSales.toFixed(2)}</td>
                 </tr>
@@ -243,19 +228,19 @@ THANK YOU
           </div>
 
           <div className="overflow-x-auto rounded-xl border border-slate-700/70">
-            <table className="w-full text-left">
+            <table className="w-full text-left" style={{ borderCollapse: 'collapse' }}>
               <thead className="bg-slate-900 text-slate-100">
                 <tr>
-                  <th className="p-3 sm:p-4 uppercase font-black text-sm sm:text-base">Date</th>
-                  <th className="p-3 sm:p-4 uppercase font-black text-sm sm:text-base">Bill ID</th>
-                  <th className="p-3 sm:p-4 uppercase font-black text-sm sm:text-base">Mobile</th>
-                  <th className="p-3 sm:p-4 uppercase font-black text-sm sm:text-base text-right">Total</th>
-                  <th className="p-3 sm:p-4 uppercase font-black text-sm sm:text-base text-center">Action</th>
+                  <th className="p-3 sm:p-4 uppercase font-black text-sm sm:text-base border-b border-slate-700">Date</th>
+                  <th className="p-3 sm:p-4 uppercase font-black text-sm sm:text-base border-b border-slate-700">Bill ID</th>
+                  <th className="p-3 sm:p-4 uppercase font-black text-sm sm:text-base border-b border-slate-700">Mobile</th>
+                  <th className="p-3 sm:p-4 uppercase font-black text-sm sm:text-base text-right border-b border-slate-700">Total</th>
+                  <th className="p-3 sm:p-4 uppercase font-black text-sm sm:text-base text-center border-b border-slate-700">Action</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-700">
+              <tbody>
                 {filteredOrders.map((order, index) => (
-                  <tr key={order._id} className={`${index % 2 === 0 ? 'bg-slate-950/50' : 'bg-slate-900/50'} hover:bg-slate-800/50 transition-colors`}>
+                  <tr key={order._id} className={`${index % 2 === 0 ? 'bg-slate-950/40' : 'bg-slate-900/40'} hover:bg-slate-800/60 transition-colors border-b border-slate-700/50 last:border-0`}>
                     <td className="p-3 sm:p-4 font-semibold text-slate-100 text-sm sm:text-base">{new Date(order.createdAt).toLocaleDateString()}</td>
                     <td className="p-3 sm:p-4 font-mono text-slate-300 text-sm sm:text-base">{order.billId}</td>
                     <td className="p-3 sm:p-4 font-semibold text-slate-100 text-sm sm:text-base">{order.mobile || "GUEST"}</td>
