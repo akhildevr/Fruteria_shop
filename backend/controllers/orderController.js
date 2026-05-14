@@ -103,6 +103,13 @@ exports.createOrder = async (req, res) => {
     console.log("✅ [DB] Order saved successfully:", order._id);
 
     console.log("✅ [SUCCESS] Order created! Bill ID:", order.billId, "Final Total:", order.finalTotal);
+
+    // Emit socket event for instant reload
+    const io = req.app.get("socketio");
+    if (io) {
+      io.emit("orderUpdated");
+    }
+
     res.json({
       success: true,
       order,
@@ -149,6 +156,13 @@ exports.deleteOrder = async (req, res) => {
     }
     
     console.log("✅ [DB] Order deleted successfully:", id);
+
+    // Emit socket event for instant reload
+    const io = req.app.get("socketio");
+    if (io) {
+      io.emit("orderUpdated");
+    }
+
     res.json({ success: true, message: "Order deleted successfully", order });
   } catch (error) {
     console.error("❌ [ERROR] Failed to delete order:", error.message);

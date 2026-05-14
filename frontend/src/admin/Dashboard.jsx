@@ -1,16 +1,25 @@
 import { useEffect, useState } from "react";
 import { fetchOrders, fetchTodaySales } from "../utils/api";
 import AdminNavbar from "./AdminNavbar";
+import socket from "../utils/socket";
 
 const Dashboard = () => {
   const [orders, setOrders] = useState([]);
   const [todaySales, setTodaySales] = useState(0);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedDate, setSelectedDate] = useState("");
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetchOrdersData();
     fetchTodaySalesData();
+
+    socket.on("orderUpdated", () => {
+      fetchOrdersData();
+      fetchTodaySalesData();
+    });
+
+    return () => socket.off("orderUpdated");
   }, []);
 
   const fetchOrdersData = async () => {
@@ -19,6 +28,8 @@ const Dashboard = () => {
       setOrders(res.data);
     } catch (error) {
       console.error("Error fetching orders", error);
+    } finally {
+      setLoading(false);
     }
   };
 

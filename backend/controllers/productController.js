@@ -33,6 +33,10 @@ exports.createProduct = async (req, res) => {
       category
     });
     console.log("✅ [DB] Product created:", product._id, "-", product.name);
+    const io = req.app.get("socketio");
+    if (io) {
+      io.emit("productUpdated");
+    }
     res.json(product);
   } catch (error) {
     console.error("❌ [ERROR] Create product failed:", error.message);
@@ -60,6 +64,10 @@ exports.updateProduct = async (req, res) => {
 
     await product.save();
     console.log("✅ [DB] Product updated:", product._id, "-", product.name);
+    const io = req.app.get("socketio");
+    if (io) {
+      io.emit("productUpdated");
+    }
     res.json(product);
   } catch (error) {
     console.error("❌ [ERROR] Update product failed:", error.message);
@@ -77,6 +85,10 @@ exports.deleteProduct = async (req, res) => {
       req.params.id
     );
     console.log("✅ [DB] Product deleted:", req.params.id);
+    const io = req.app.get("socketio");
+    if (io) {
+      io.emit("productUpdated");
+    }
     res.json({
       success: true
     });

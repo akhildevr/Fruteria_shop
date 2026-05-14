@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { fetchProducts, fetchCustomer, createOrder } from "../utils/api";
+import socket from "../utils/socket";
 
 const BillingScreen = () => {
   const [products, setProducts] = useState([]);
@@ -8,20 +9,40 @@ const BillingScreen = () => {
   const [mobile, setMobile] = useState("");
   const [walletPoints, setWalletPoints] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [productLoading, setProductLoading] = useState(true);
   const [showDropdown, setShowDropdown] = useState(false);
   const [orderSaved, setOrderSaved] = useState(false);
   const [alert, setAlert] = useState({ show: false, message: "" });
 
   useEffect(() => {
-    fetchProductsData();
+    const cachedProducts = localStorage.getItem("fruteria_products");
+    if (cachedProducts) {
+      setProducts(JSON.parse(cachedProducts));
+      setProductLoading(false);
+      // Fetch fresh data in background without loading state
+      fetchProductsData(false);
+    } else {
+      // No cache, fetch with loading state
+      fetchProductsData(true);
+    }
+
+    socket.on("productUpdated", () => fetchProductsData(false));
+
+    return () => {
+      socket.off("productUpdated");
+    };
   }, []);
 
-  const fetchProductsData = async () => {
+  const fetchProductsData = async (showLoading = true) => {
     try {
+      if (showLoading) setProductLoading(true);
       const res = await fetchProducts();
       setProducts(res.data);
+      localStorage.setItem("fruteria_products", JSON.stringify(res.data));
     } catch (error) {
       console.error("Fetch products failed:", error);
+    } finally {
+      if (showLoading) setProductLoading(false);
     }
   };
 
@@ -203,7 +224,9 @@ const BillingScreen = () => {
             <>
               <div className="fixed inset-0 z-40" onClick={() => setShowDropdown(false)}></div>
               <div className="absolute left-0 right-0 top-full mt-2 bg-slate-950/95 border border-slate-700 rounded-[1.75rem] shadow-2xl z-50 max-h-96 overflow-y-auto backdrop-blur-xl">
-                {filteredProducts.length > 0 ? (
+                {productLoading ? (
+                  <div className="p-6 text-center text-base sm:text-lg font-bold text-slate-400">Loading items…</div>
+                ) : filteredProducts.length > 0 ? (
                   filteredProducts.map(product => (
                     <div
                       key={product._id}

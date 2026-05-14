@@ -10,21 +10,29 @@ const connectDB = require("./config/db");
 connectDB();
 
 const app = express();
-
 const server = http.createServer(app);
 
-const io = new Server(server, {
-  cors: {
-    origin: "*"
-  }
-});
-
-// Update CORS to allow all Vercel deployments and local development
 const allowedOrigins = [
   'https://fruteria-shop.onrender.com',
   'http://localhost:5173',
   /\.vercel\.app$/ // Matches any Vercel subdomain
 ];
+
+const io = new Server(server, {
+  cors: {
+    origin: allowedOrigins,
+    methods: ["GET", "POST", "PUT", "DELETE"]
+  }
+});
+
+app.set("socketio", io);
+
+io.on("connection", (socket) => {
+  console.log(`🟢 Socket connected: ${socket.id}`);
+  socket.on("disconnect", () => {
+    console.log(`🔴 Socket disconnected: ${socket.id}`);
+  });
+});
 
 app.use(cors({
   origin: allowedOrigins,
