@@ -7,6 +7,7 @@ const AdminNavbar = () => {
     { name: "Dashboard", path: "/admin" },
     { name: "Products", path: "/admin/products" },
     { name: "Orders", path: "/admin/orders" },
+    { name: "Purchase", path: "/admin/purchase" },
     { name: "Customers", path: "/admin/customers" },
     { name: "Billing", path: "/" },
   ];
@@ -22,7 +23,7 @@ const AdminNavbar = () => {
           className={`px-3 sm:px-4 py-2 rounded-lg font-semibold transition-all text-sm sm:text-base ${
             location.pathname === link.path
               ? "bg-gradient-to-r from-amber-400 via-amber-300 to-yellow-400 text-slate-950 shadow-lg"
-              : "text-slate-200 hover:bg-slate-800/70 hover:text-amber-200"
+              : "text-slate-200 hover:bg-slate-800/70 hover:text-amber-300"
           }`}
         >
           {link.name}

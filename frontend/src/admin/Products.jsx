@@ -1,14 +1,18 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { fetchProducts, addProduct, updateProduct, deleteProduct } from "../utils/api";
 import AdminNavbar from "./AdminNavbar";
 
 const Products = () => {
   const [products, setProducts] = useState([]);
-  const [form, setForm] = useState({ id: "", name: "", price: "", category: "Juice" });
+  const [form, setForm] = useState({ id: "", name: "", price: "", category: "LIME" });
   const [editing, setEditing] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const [activeCategory, setActiveCategory] = useState("All");
+  const [categoryOpen, setCategoryOpen] = useState({});
   const [alert, setAlert] = useState({ show: false, message: "" });
   const [confirm, setConfirm] = useState({ show: false, id: null });
+  const nameInputRef = useRef(null);
+  const formSectionRef = useRef(null);
 
   useEffect(() => { fetchProductsData(); }, []);
 
@@ -16,6 +20,11 @@ const Products = () => {
     try {
       const res = await fetchProducts();
       setProducts(res.data);
+      const openState = {};
+      res.data.forEach(product => {
+        if (product.category) openState[product.category] = true;
+      });
+      setCategoryOpen(openState);
     } catch (error) {
       console.error("Fetch products failed:", error);
     }
@@ -31,7 +40,7 @@ const Products = () => {
         await addProduct(form);
         setAlert({ show: true, message: "Product Added Successfully" });
       }
-      setForm({ id: "", name: "", price: "", category: "Juice" });
+      setForm({ id: "", name: "", price: "", category: "LIME" });
       setEditing(false);
       fetchProductsData();
     } catch (error) {
@@ -42,6 +51,12 @@ const Products = () => {
   const editProduct = (product) => {
     setEditing(true);
     setForm({ id: product._id, name: product.name, price: product.price, category: product.category });
+    setActiveCategory(product.category || "All");
+    setCategoryOpen(prev => ({ ...prev, [product.category]: true }));
+    setTimeout(() => {
+      nameInputRef.current?.focus();
+      formSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 100);
   };
 
   const deleteProductAction = async (id) => {
@@ -59,6 +74,19 @@ const Products = () => {
     p.category.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  const categories = useMemo(() => {
+    const unique = [...new Set(filteredProducts.map(p => p.category || "Uncategorized"))];
+    return ["All", ...unique.sort()];
+  }, [filteredProducts]);
+
+  const productsByCategory = useMemo(() => {
+    return categories.reduce((map, category) => {
+      if (category === "All") return map;
+      map[category] = filteredProducts.filter(p => p.category === category);
+      return map;
+    }, {});
+  }, [categories, filteredProducts]);
+
   return (
     <div className="min-h-screen text-slate-100 px-3 py-4" style={{ background: "radial-gradient(circle at top, rgba(56,189,248,0.15), transparent 30%), linear-gradient(180deg, #020617 0%, #060d19 50%, #020616 100%)" }}>
       <AdminNavbar />
@@ -66,7 +94,7 @@ const Products = () => {
 
       <div className="mx-auto w-full max-w-6xl space-y-6">
         {/* FORM */}
-        <div className="premium-card p-4 sm:p-6 shadow-2xl border border-slate-700/70">
+        <div ref={formSectionRef} className="premium-card p-4 sm:p-6 shadow-2xl border border-slate-700/70">
           <h2 className="font-semibold mb-2 uppercase text-slate-100 text-sm sm:text-base tracking-[0.14em]">
             {editing ? "✏️ Edit Item" : "➕ Add New Item"}
           </h2>
@@ -74,6 +102,7 @@ const Products = () => {
             <div>
               <label className="block font-semibold mb-2 uppercase text-slate-100 text-sm sm:text-base">Name</label>
               <input
+                ref={nameInputRef}
                 type="text"
                 placeholder="Juice/Shake Name"
                 value={form.name}
@@ -98,10 +127,14 @@ const Products = () => {
                 onChange={(e) => setForm({ ...form, category: e.target.value })}
                 className="premium-input w-full px-4 py-3 text-[clamp(1rem,2.6vw,1.3rem)] font-semibold"
               >
-                <option>Juice</option>
-                <option>Shake</option>
-                <option>Mojito</option>
-                <option>Ice Cream</option>
+                <option>LIME</option>
+                <option>JUICE</option>
+                <option>SHAKES</option>
+                <option>MOJITO</option>
+                <option>MILK DRINKS</option>
+                <option>AVIL MILK</option>
+                <option>FALOODA</option>
+                <option>ICE CREAM</option>
               </select>
             </div>
           </div>
@@ -111,7 +144,7 @@ const Products = () => {
               {editing ? "UPDATE PRODUCT" : "ADD PRODUCT"}
             </button>
             {editing && (
-              <button onClick={() => { setEditing(false); setForm({ id: "", name: "", price: "", category: "Juice" }); }} className="premium-button-secondary px-8 py-3 bg-slate-900/95 text-slate-100 text-lg sm:text-xl font-black border border-slate-600 shadow-lg hover:border-slate-400 transition-all">
+              <button onClick={() => { setEditing(false); setForm({ id: "", name: "", price: "", category: "LIME" }); }} className="premium-button-secondary px-8 py-3 bg-slate-900/95 text-slate-100 text-lg sm:text-xl font-black border border-slate-600 shadow-lg hover:border-slate-400 transition-all">
                 CANCEL
               </button>
             )}
@@ -130,33 +163,77 @@ const Products = () => {
           />
         </div>
 
-        {/* TABLE */}
-        <div className="premium-card rounded-2xl shadow-2xl overflow-hidden border border-slate-700/70">
-          <table className="w-full text-left">
-            <thead className="bg-slate-900 text-slate-100">
-              <tr>
-                <th className="p-3 sm:p-4 uppercase font-black text-sm sm:text-base">Product</th>
-                <th className="p-3 sm:p-4 uppercase font-black text-sm sm:text-base">Category</th>
-                <th className="p-3 sm:p-4 uppercase font-black text-sm sm:text-base text-right">Price</th>
-                <th className="p-3 sm:p-4 uppercase font-black text-sm sm:text-base text-center">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-700">
-              {filteredProducts.map((product, index) => (
-                <tr key={product._id} className={`${index % 2 === 0 ? 'bg-slate-950/50' : 'bg-slate-900/50'} hover:bg-slate-800/50 transition-colors`}>
-                  <td className="p-3 sm:p-4 font-semibold text-slate-100 text-sm sm:text-base">{product.name}</td>
-                  <td className="p-3 sm:p-4 font-semibold text-sm sm:text-base uppercase text-slate-400">{product.category}</td>
-                  <td className="p-3 sm:p-4 font-bold text-right text-sm sm:text-base text-emerald-300">₹{product.price}</td>
-                  <td className="p-3 sm:p-4 text-center">
-                    <div className="flex flex-col sm:flex-row justify-center gap-2 sm:gap-3">
-                      <button onClick={() => editProduct(product)} className="premium-button bg-gradient-to-r from-cyan-400 via-sky-400 to-blue-500 text-slate-950 px-4 py-2 rounded-xl font-bold hover:from-cyan-300 hover:to-blue-400 transition-all text-sm sm:text-base">EDIT</button>
-                      <button onClick={() => setConfirm({ show: true, id: product._id })} className="premium-button bg-gradient-to-r from-rose-400 to-red-500 text-slate-950 px-4 py-2 rounded-xl font-bold hover:from-rose-300 hover:to-red-400 transition-all text-sm sm:text-base">DELETE</button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        {/* CATEGORY TABS */}
+        <div className="mb-6 flex flex-wrap gap-3">
+          {categories.map((category) => (
+            <button
+              key={category}
+              onClick={() => setActiveCategory(category)}
+              className={`px-4 py-2 rounded-full font-semibold transition-all ${activeCategory === category ? "bg-cyan-400 text-slate-950 shadow-lg" : "bg-slate-900/90 text-slate-200 border border-slate-700 hover:bg-slate-800"}`}
+            >
+              {category}
+            </button>
+          ))}
+        </div>
+
+        {/* CATEGORIZED PRODUCT LIST */}
+        <div className="space-y-4">
+          {categories.filter(category => category === "All" ? true : activeCategory === "All" || activeCategory === category).map((category) => {
+            if (category === "All") return null;
+            const categoryProducts = productsByCategory[category] || [];
+            if (categoryProducts.length === 0) return null;
+
+            const open = categoryOpen[category] ?? true;
+
+            return (
+              <div key={category} className="premium-card rounded-3xl border border-slate-700/70 shadow-2xl overflow-hidden">
+                <button
+                  type="button"
+                  onClick={() => setCategoryOpen(prev => ({ ...prev, [category]: !open }))}
+                  className="w-full flex items-center justify-between bg-slate-950/90 px-5 py-4 text-left text-slate-100 hover:bg-slate-900 transition-colors"
+                >
+                  <div>
+                    <div className="text-lg sm:text-xl font-black uppercase tracking-[0.2em]">{category}</div>
+                    <div className="text-sm text-slate-400">{categoryProducts.length} item{categoryProducts.length === 1 ? "" : "s"}</div>
+                  </div>
+                  <span className="text-2xl">{open ? "−" : "+"}</span>
+                </button>
+                {open && (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left">
+                      <thead className="bg-slate-900 text-slate-100">
+                        <tr>
+                          <th className="p-3 sm:p-4 uppercase font-black text-sm sm:text-base">Product</th>
+                          <th className="p-3 sm:p-4 uppercase font-black text-sm sm:text-base text-right">Price</th>
+                          <th className="p-3 sm:p-4 uppercase font-black text-sm sm:text-base text-center">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-700">
+                        {categoryProducts.map((product, index) => (
+                          <tr key={product._id} className={`${index % 2 === 0 ? 'bg-slate-950/50' : 'bg-slate-900/50'} hover:bg-slate-800/50 transition-colors`}>
+                            <td className="p-3 sm:p-4 font-semibold text-slate-100 text-sm sm:text-base">{product.name}</td>
+                            <td className="p-3 sm:p-4 font-bold text-right text-sm sm:text-base text-emerald-300">₹{product.price}</td>
+                            <td className="p-3 sm:p-4 text-center">
+                              <div className="flex flex-col sm:flex-row justify-center gap-2 sm:gap-3">
+                                <button onClick={() => editProduct(product)} className="premium-button bg-gradient-to-r from-cyan-400 via-sky-400 to-blue-500 text-slate-950 px-4 py-2 rounded-xl font-bold hover:from-cyan-300 hover:to-blue-400 transition-all text-sm sm:text-base">EDIT</button>
+                                <button onClick={() => setConfirm({ show: true, id: product._id })} className="premium-button bg-gradient-to-r from-rose-400 to-red-500 text-slate-950 px-4 py-2 rounded-xl font-bold hover:from-rose-300 hover:to-red-400 transition-all text-sm sm:text-base">DELETE</button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+
+          {filteredProducts.length === 0 && (
+            <div className="premium-card rounded-3xl p-6 bg-slate-950/80 border border-slate-700/70 text-center text-slate-300">
+              No products matched your search.
+            </div>
+          )}
         </div>
       </div>
 

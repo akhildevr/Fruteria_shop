@@ -8,6 +8,7 @@ import BillingScreen from "./billing/BillingScreen";
 import Dashboard from "./admin/Dashboard";
 import Products from "./admin/Products";
 import Orders from "./admin/Orders";
+import Purchase from "./admin/Purchase";
 import Customers from "./admin/Customers";
 
 function App() {
@@ -36,6 +37,11 @@ function App() {
         <Route
           path="/admin/orders"
           element={<Orders />}
+        />
+
+        <Route
+          path="/admin/purchase"
+          element={<Purchase />}
         />
 
         <Route

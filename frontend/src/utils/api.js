@@ -15,6 +15,11 @@ export const fetchOrders = () => API.get("/orders");
 export const createOrder = (data) => API.post("/orders", data);
 export const deleteOrder = (id) => API.delete(`/orders/${id}`);
 
+// Purchases
+export const fetchPurchases = () => API.get("/purchases");
+export const addPurchase = (data) => API.post("/purchases", data);
+export const deletePurchase = (id) => API.delete(`/purchases/${id}`);
+
 // Customers
 export const fetchCustomer = (mobile) => API.get(`/customers/${mobile}`);
 

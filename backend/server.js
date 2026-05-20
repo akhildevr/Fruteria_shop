@@ -44,6 +44,7 @@ app.use("/api/orders", require("./routes/orderRoutes"));
 app.use("/api/products", require("./routes/productRoutes"));
 app.use("/api/analytics", require("./routes/analyticsRoutes"));
 app.use("/api/customers", require("./routes/customerRoutes"));
+app.use("/api/purchases", require("./routes/purchaseRoutes"));
 
 app.get("/", (req, res) => {
   res.send("Fruteria API Running");
