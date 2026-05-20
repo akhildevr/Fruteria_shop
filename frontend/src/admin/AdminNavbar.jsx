@@ -4,12 +4,12 @@ const AdminNavbar = () => {
   const location = useLocation();
 
   const links = [
-    { name: "Dashboard", path: "/admin" },
-    { name: "Products", path: "/admin/products" },
-    { name: "Orders", path: "/admin/orders" },
-    { name: "Purchase", path: "/admin/purchase" },
-    { name: "Customers", path: "/admin/customers" },
-    { name: "Billing", path: "/" },
+    { name: "DASHBOARD", path: "/admin" },
+    { name: "PRODUCTS", path: "/admin/products" },
+    { name: "ORDERS", path: "/admin/orders" },
+    { name: "PURCHASE", path: "/admin/purchase" },
+    { name: "CUSTOMERS", path: "/admin/customers" },
+    { name: "BILLING", path: "/" },
   ];
 
   return (

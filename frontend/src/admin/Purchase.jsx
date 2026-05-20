@@ -4,7 +4,7 @@ import AdminNavbar from "./AdminNavbar";
 
 const Purchase = () => {
   const [purchases, setPurchases] = useState([]);
-  const [form, setForm] = useState({ itemName: "", quantity: "", price: "", date: new Date().toISOString().split('T')[0] });
+  const [form, setForm] = useState({ itemName: "", quantity: "", unit: "", price: "", date: new Date().toISOString().split('T')[0] });
   const [searchTerm, setSearchTerm] = useState("");
   const [alert, setAlert] = useState({ show: false, message: "" });
   const [confirm, setConfirm] = useState({ show: false, id: null });
@@ -21,13 +21,17 @@ const Purchase = () => {
   };
 
   const savePurchaseAction = async () => {
-    if (!form.itemName || !form.quantity || !form.price || !form.date) {
+    if (!form.itemName || !form.quantity || !form.unit || !form.price || !form.date) {
       return setAlert({ show: true, message: "Please fill all fields" });
     }
     try {
-      await addPurchase(form);
+      const submissionData = {
+        ...form,
+        quantity: `${form.quantity} ${form.unit}`
+      };
+      await addPurchase(submissionData);
       setAlert({ show: true, message: "Purchase Recorded Successfully" });
-      setForm({ itemName: "", quantity: "", price: "", date: new Date().toISOString().split('T')[0] });
+      setForm({ itemName: "", quantity: "", unit: "", price: "", date: new Date().toISOString().split('T')[0] });
       fetchPurchasesData();
     } catch (error) {
       setAlert({ show: true, message: "Error Saving Purchase" });
@@ -48,6 +52,8 @@ const Purchase = () => {
     p.itemName.toLowerCase().includes(searchTerm.toLowerCase()) ||
     p.date.includes(searchTerm)
   );
+
+  const totalPurchaseCost = filteredPurchases.reduce((sum, p) => sum + (Number(p.price) || 0), 0);
 
   return (
     <div className="min-h-screen text-slate-100 px-3 py-4" style={{ background: "radial-gradient(circle at top, rgba(56,189,248,0.15), transparent 30%), linear-gradient(180deg, #020617 0%, #060d19 50%, #020616 100%)" }}>
@@ -71,13 +77,26 @@ const Purchase = () => {
             </div>
             <div>
               <label className="block font-semibold mb-2 text-slate-300 text-xs uppercase">Quantity</label>
-              <input
-                type="text"
-                placeholder="e.g. 10kg, 5L"
-                value={form.quantity}
-                onChange={(e) => setForm({ ...form, quantity: e.target.value })}
-                className="premium-input w-full px-4 py-2 text-sm font-semibold"
-              />
+              <div className="flex gap-2">
+                <input
+                  type="number"
+                  placeholder="Qty"
+                  value={form.quantity}
+                  onChange={(e) => setForm({ ...form, quantity: e.target.value })}
+                  className="premium-input flex-1 px-4 py-2 text-sm font-semibold"
+                />
+                <select
+                  value={form.unit}
+                  onChange={(e) => setForm({ ...form, unit: e.target.value })}
+                  className="premium-input px-2 py-2 text-sm font-semibold bg-slate-900 border border-slate-700 rounded-lg outline-none focus:border-cyan-400 transition-all text-slate-100 cursor-pointer"
+                >
+                  <option value="">unit</option>
+                  <option value="KG">KG</option>
+                  <option value="G">G</option>
+                  <option value="Ltr">Ltr</option>
+                  <option value="PCS">PCS</option>
+                </select>
+              </div>
             </div>
             <div>
               <label className="block font-semibold mb-2 text-slate-300 text-xs uppercase">Cost (₹)</label>
@@ -99,7 +118,8 @@ const Purchase = () => {
               />
             </div>
           </div>
-          <button onClick={savePurchaseAction} className="mt-6 premium-button px-8 py-3 bg-gradient-to-r from-emerald-400 to-teal-500 text-slate-950 text-lg font-black shadow-lg transition-all w-full sm:w-auto">
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mt-6"></div>
+          <button onClick={savePurchaseAction} className="mt-14 premium-button px-8 py-3 bg-gradient-to-r from-emerald-400 to-teal-500 text-slate-950 text-lg font-black shadow-lg transition-all w-full sm:w-auto">
             RECORD PURCHASE
           </button>
         </div>
@@ -139,6 +159,13 @@ const Purchase = () => {
                   </td>
                 </tr>
               ))}
+              {filteredPurchases.length > 0 && (
+                <tr className="bg-slate-900/80 font-black border-t-2 border-slate-700">
+                  <td colSpan="3" className="p-3 sm:p-4 text-right text-xs sm:text-sm uppercase tracking-[0.2em] text-slate-400">Total Purchase Cost</td>
+                  <td className="p-3 sm:p-4 text-right text-base sm:text-lg text-amber-300">₹{totalPurchaseCost.toFixed(2)}</td>
+                  <td></td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>

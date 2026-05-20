@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { fetchOrders, fetchTodaySales } from "../utils/api";
+import { fetchOrders, fetchTodaySales, fetchPurchases } from "../utils/api";
 import AdminNavbar from "./AdminNavbar";
 import socket from "../utils/socket";
 
@@ -9,10 +9,12 @@ const Dashboard = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedDate, setSelectedDate] = useState("");
   const [loading, setLoading] = useState(true);
+  const [purchases, setPurchases] = useState([]);
 
   useEffect(() => {
     fetchOrdersData();
     fetchTodaySalesData();
+    fetchPurchasesData();
 
     socket.on("orderUpdated", () => {
       fetchOrdersData();
@@ -30,6 +32,15 @@ const Dashboard = () => {
       console.error("Error fetching orders", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchPurchasesData = async () => {
+    try {
+      const res = await fetchPurchases();
+      setPurchases(res.data);
+    } catch (error) {
+      console.error("Error fetching purchases", error);
     }
   };
 
@@ -71,6 +82,8 @@ THANK YOU
     : orders;
 
   const selectedDateSales = selectedDateOrders.reduce((a, b) => a + b.finalTotal, 0);
+
+  const totalPurchaseCost = purchases.reduce((a, b) => a + (Number(b.price) || 0), 0);
 
   const filteredOrders = selectedDateOrders.filter(order => 
     (order.mobile && order.mobile.includes(searchTerm)) || 
@@ -173,25 +186,30 @@ THANK YOU
       <h1 className="font-extrabold text-center tracking-tight text-amber-300 mb-8" style={{ fontSize: "clamp(2.2rem, 6vw, 3rem)" }}>DASHBOARD</h1>
 
       <div className="mx-auto w-full max-w-6xl">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8">
-          <div className="bg-slate-950/90 p-4 sm:p-6 rounded-[2rem] border border-slate-700/70 shadow-xl text-center">
-            <h2 className="text-lg sm:text-xl font-semibold text-slate-100 mb-3 uppercase tracking-[0.14em]">Today's Sales</h2>
-            <p className="text-3xl sm:text-4xl font-black text-amber-300">₹{todaySales}</p>
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-6 mb-8">
+          <div className="bg-slate-950/90 p-4 rounded-[2rem] border border-slate-700/70 shadow-xl text-center flex flex-col justify-center min-h-[120px]">
+            <h2 className="text-[9px] sm:text-[11px] font-semibold text-slate-100 mb-2 uppercase tracking-[0.07em]">Today's Sales</h2>
+            <p className="text-xl sm:text-2xl font-black text-amber-300">₹{todaySales}</p>
           </div>
 
-          <div className="bg-slate-950/90 p-4 sm:p-6 rounded-[2rem] border border-slate-700/70 shadow-xl text-center">
-            <h2 className="text-lg sm:text-xl font-semibold text-slate-100 mb-3 uppercase tracking-[0.14em]">Total Sales</h2>
-            <p className="text-3xl sm:text-4xl font-black text-cyan-300">₹{totalSales}</p>
+          <div className="bg-slate-950/90 p-4 rounded-[2rem] border border-slate-700/70 shadow-xl text-center flex flex-col justify-center min-h-[120px]">
+            <h2 className="text-[9px] sm:text-[11px] font-semibold text-slate-100 mb-2 uppercase tracking-[0.07em]">Total Sales</h2>
+            <p className="text-xl sm:text-2xl font-black text-cyan-300">₹{totalSales}</p>
           </div>
 
-          <div className="bg-slate-950/90 p-4 sm:p-6 rounded-[2rem] border border-slate-700/70 shadow-xl text-center">
-            <h2 className="text-lg sm:text-xl font-semibold text-slate-100 mb-3 uppercase tracking-[0.14em]">Total Orders</h2>
-            <p className="text-3xl sm:text-4xl font-black text-emerald-300">{orders.length}</p>
+          <div className="bg-slate-950/90 p-4 rounded-[2rem] border border-slate-700/70 shadow-xl text-center flex flex-col justify-center min-h-[120px]">
+            <h2 className="text-[9px] sm:text-[11px] font-semibold text-slate-100 mb-2 uppercase tracking-[0.07em]">Total Purchase</h2>
+            <p className="text-xl sm:text-2xl font-black text-rose-400">₹{totalPurchaseCost}</p>
           </div>
 
-          <div className="bg-slate-950/90 p-4 sm:p-6 rounded-[2rem] border border-slate-700/70 shadow-xl text-center">
-            <h2 className="text-lg sm:text-xl font-semibold text-slate-100 mb-3 uppercase tracking-[0.14em]">Day Sales</h2>
-            <p className="text-3xl sm:text-4xl font-black text-rose-300">{selectedDate ? `₹${selectedDateSales}` : "—"}</p>
+          <div className="bg-slate-950/90 p-4 rounded-[2rem] border border-slate-700/70 shadow-xl text-center flex flex-col justify-center min-h-[120px]">
+            <h2 className="text-[9px] sm:text-[11px] font-semibold text-slate-100 mb-2 uppercase tracking-[0.07em]">Total Orders</h2>
+            <p className="text-xl sm:text-2xl font-black text-emerald-300">{orders.length}</p>
+          </div>
+
+          <div className="bg-slate-950/90 p-4 rounded-[2rem] border border-slate-700/70 shadow-xl text-center flex flex-col justify-center min-h-[120px]">
+            <h2 className="text-[9px] sm:text-[11px] font-semibold text-slate-100 mb-2 uppercase tracking-[0.07em]">Day Sales</h2>
+            <p className="text-xl sm:text-2xl font-black text-violet-300">{selectedDate ? `₹${selectedDateSales}` : "—"}</p>
             <p className="text-sm sm:text-base mt-2 text-slate-400">{selectedDate ? `${selectedDateOrders.length} orders` : "Select a date above"}</p>
           </div>
         </div>
@@ -199,7 +217,7 @@ THANK YOU
         <div className="premium-card p-4 sm:p-6 shadow-2xl border border-slate-700/70">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-6">
             <div>
-              <label className="block text-lg sm:text-xl font-semibold text-slate-100 mb-2 uppercase tracking-[0.14em]">Search Transactions</label>
+              <label className="block text-sm sm:text-base font-semibold text-slate-100 mb-2 uppercase tracking-[0.14em]">Search Transactions</label>
               <input
                 type="text"
                 placeholder="🔍 Mobile or Bill ID..."
@@ -210,7 +228,7 @@ THANK YOU
             </div>
 
             <div>
-              <label className="block text-lg sm:text-xl font-semibold text-slate-100 mb-2 uppercase tracking-[0.14em]">Filter by Day</label>
+              <label className="block text-sm sm:text-base font-semibold text-slate-100 mb-2 uppercase tracking-[0.14em]">Filter by Day</label>
               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4">
                 <input
                   type="date"
