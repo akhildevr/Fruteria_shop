@@ -21,7 +21,14 @@ const Dashboard = () => {
       fetchTodaySalesData();
     });
 
-    return () => socket.off("orderUpdated");
+    socket.on("purchaseUpdated", () => {
+      fetchPurchasesData();
+    });
+
+    return () => {
+      socket.off("orderUpdated");
+      socket.off("purchaseUpdated");
+    };
   }, []);
 
   const fetchOrdersData = async () => {

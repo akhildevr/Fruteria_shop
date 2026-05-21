@@ -1,12 +1,21 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import AdminNavbar from "./AdminNavbar";
+import socket from "../utils/socket";
 
 const Customers = () => {
   const [customers, setCustomers] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
 
-  useEffect(() => { fetchCustomers(); }, []);
+  useEffect(() => { 
+    fetchCustomers(); 
+
+    socket.on("orderUpdated", fetchCustomers);
+
+    return () => {
+      socket.off("orderUpdated");
+    };
+  }, []);
 
   const fetchCustomers = async () => {
     try {

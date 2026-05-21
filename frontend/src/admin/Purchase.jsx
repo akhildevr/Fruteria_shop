@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { fetchPurchases, addPurchase, deletePurchase } from "../utils/api";
 import AdminNavbar from "./AdminNavbar";
+import socket from "../utils/socket";
 
 const Purchase = () => {
   const [purchases, setPurchases] = useState([]);
@@ -9,7 +10,15 @@ const Purchase = () => {
   const [alert, setAlert] = useState({ show: false, message: "" });
   const [confirm, setConfirm] = useState({ show: false, id: null });
 
-  useEffect(() => { fetchPurchasesData(); }, []);
+  useEffect(() => { 
+    fetchPurchasesData(); 
+
+    socket.on("purchaseUpdated", fetchPurchasesData);
+
+    return () => {
+      socket.off("purchaseUpdated");
+    };
+  }, []);
 
   const fetchPurchasesData = async () => {
     try {

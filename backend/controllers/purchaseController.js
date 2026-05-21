@@ -7,6 +7,12 @@ exports.addPurchase = async (req, res) => {
   try {
     const newPurchase = new Purchase(req.body);
     await newPurchase.save();
+
+    const io = req.app.get("socketio");
+    if (io) {
+      io.emit("purchaseUpdated");
+    }
+
     res.status(201).json(newPurchase);
   } catch (error) {
     console.error('Error adding purchase:', error);
@@ -34,6 +40,12 @@ exports.deletePurchase = async (req, res) => {
   try {
     const purchase = await Purchase.findByIdAndDelete(req.params.id);
     if (!purchase) return res.status(404).json({ message: 'Purchase not found' });
+
+    const io = req.app.get("socketio");
+    if (io) {
+      io.emit("purchaseUpdated");
+    }
+
     res.status(200).json({ message: 'Purchase deleted successfully' });
   } catch (error) {
     console.error('Error deleting purchase:', error);
