@@ -13,6 +13,8 @@ const BillingScreen = () => {
   const [showDropdown, setShowDropdown] = useState(false);
   const [orderSaved, setOrderSaved] = useState(false);
   const [alert, setAlert] = useState({ show: false, message: "" });
+  const [paymentMethod, setPaymentMethod] = useState("Cash");
+  const [cashGiven, setCashGiven] = useState("");
 
   useEffect(() => {
     const cachedProducts = localStorage.getItem("fruteria_products");
@@ -101,10 +103,11 @@ const BillingScreen = () => {
   const subtotal = cart.reduce((sum, item) => sum + item.price * item.qty, 0);
   const rewardUsed = walletPoints > 20 ? Math.min(walletPoints, subtotal) : 0;
   const amountAfterReward = subtotal - rewardUsed;
-  const rewardPoints = amountAfterReward <= 500 ? Math.floor(amountAfterReward * 0.05) : 0;
-  const discount = amountAfterReward > 500 ? amountAfterReward * 0.05 : 0;
+  const discount = amountAfterReward >= 500 ? amountAfterReward * 0.05 : 0;
   const finalTotal = amountAfterReward - discount;
+  const rewardPoints = amountAfterReward < 500 ? Math.floor(finalTotal * 0.05) : 0;
   const totalItems = cart.reduce((a, b) => a + b.qty, 0);
+  const balance = cashGiven ? parseFloat(cashGiven) - finalTotal : 0;
 
   const padText = (text, length) => text.toString().padEnd(length).slice(0, length);
   const formatLine = (label, value, labelWidth = 13) => `${label.padEnd(labelWidth)} : ${value}`;
@@ -125,6 +128,7 @@ const BillingScreen = () => {
       formatLine("Date", date.toLocaleDateString()),
       formatLine("Time", date.toLocaleTimeString()),
       formatLine("Mobile", mobile || "Guest"),
+      formatLine("Payment", paymentMethod),
       "--------------------------------",
       "Item            Qty      Price",
       "--------------------------------",
@@ -147,6 +151,10 @@ const BillingScreen = () => {
     lines.push(
       "--------------------------------",
       formatLine("Final Total", `₹${finalTotal}`),
+      ...(paymentMethod === "Cash" && cashGiven ? [
+        formatLine("Cash Given", `₹${cashGiven}`),
+        ...(balance > 0 ? [formatLine("Balance", ` ₹${balance.toFixed(2)}`)] : []),
+      ] : []),
       "================================",
       "      THANK YOU VISIT AGAIN",
       "================================"
@@ -166,8 +174,11 @@ const BillingScreen = () => {
   const saveOrderAction = async () => {
     if (cart.length === 0) return setAlert({ show: true, message: "Add products to cart first!" });
     try {
+      if (paymentMethod === "Cash" && (!cashGiven || parseFloat(cashGiven) < finalTotal)) {
+        return setAlert({ show: true, message: "Insufficient cash received!" });
+      }
       setLoading(true);
-      await createOrder({ mobile, items: cart });
+      await createOrder({ mobile, items: cart, paymentMethod });
       setOrderSaved(true);
       setAlert({ show: true, message: "Order Saved Successfully!" });
     } catch (error) {
@@ -183,6 +194,8 @@ const BillingScreen = () => {
     setMobile("");
     setWalletPoints(0);
     setOrderSaved(false);
+    setPaymentMethod("Cash");
+    setCashGiven("");
   };
 
   return (
@@ -283,6 +296,54 @@ const BillingScreen = () => {
               <span>TOTAL</span>
               <span>₹{finalTotal}</span>
             </div>
+          </div>
+
+          {/* PAYMENT SECTION */}
+          <div className="mt-6 p-4 bg-slate-950/50 rounded-[1.75rem] border border-slate-700/70 space-y-4 shadow-inner">
+            <div className="flex items-center justify-between gap-4">
+              <label className="text-sm sm:text-base font-bold text-slate-100 uppercase tracking-wider">Payment Method</label>
+              <select
+                value={paymentMethod}
+                onChange={(e) => setPaymentMethod(e.target.value)}
+                className="bg-slate-900 text-slate-100 px-4 py-2 rounded-xl border border-slate-700 outline-none focus:border-cyan-400 font-bold transition-all cursor-pointer text-sm"
+              >
+                <option value="Cash">Cash</option>
+                <option value="UPI">UPI</option>
+              </select>
+            </div>
+
+            {paymentMethod === "Cash" && (
+              <div className="space-y-4 pt-4 border-t border-slate-700/50">
+                <div className="flex items-center justify-between gap-4">
+                  <label className="text-sm sm:text-base font-bold text-slate-100 uppercase tracking-wider">Cash Received</label>
+                  <input
+                    type="number"
+                    value={cashGiven}
+                    min="0"
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (val < 0) return;
+                      setCashGiven(val);
+                    }}
+                    placeholder="₹0"
+                    className="bg-slate-900 text-emerald-400 px-4 py-2 rounded-xl border border-slate-700 outline-none focus:border-emerald-500 font-black text-right w-32 text-lg"
+                    style={{
+                      WebkitAppearance: 'none',
+                      MozAppearance: 'textfield',
+                      margin: 0,
+                    }}
+                  />
+                </div>
+                {balance > 0 && (
+                  <div className="flex items-center justify-between gap-4">
+                    <label className="text-sm sm:text-base font-bold text-slate-100 uppercase tracking-wider">Balance to Give</label>
+                    <span className="text-xl font-black text-amber-300">
+                      ₹{balance.toFixed(2)}
+                    </span>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           {/* ACTIONS */}

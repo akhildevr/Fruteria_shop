@@ -60,6 +60,7 @@ const Dashboard = () => {
 ================================
 Bill ID : ${order.billId}
 Mobile : ${order.mobile}
+Payment : ${order.paymentMethod || "Cash"}
 --------------------------------
 ${order.items.map(item => `${item.name}\n${item.qty} x ${item.price}`).join("\n")}
 --------------------------------
@@ -100,6 +101,7 @@ THANK YOU
           <tr class="${isLast ? 'bill-row-end' : ''}">
             <td>${isFirst ? (order.billId || order._id) : ""}</td>
             <td>${isFirst ? (order.mobile && order.mobile.toLowerCase() !== "guest" ? order.mobile : "Guest") : ""}</td>
+            <td>${isFirst ? (order.paymentMethod || "Cash") : ""}</td>
             <td>${item.name}</td>
             <td class="text-right">${item.qty}</td>
             <td class="text-right">₹${item.price}</td>
@@ -129,7 +131,7 @@ THANK YOU
             .report-table tr.bill-row-end td { border-bottom: 1px solid #ccc; }
             .report-table .text-right { text-align: right; }
             .report-table .bold { font-weight: bold; }
-            .report-table td:first-child, .report-table td:nth-child(2) { vertical-align: top; }
+            .report-table td:first-child, .report-table td:nth-child(2), .report-table td:nth-child(3) { vertical-align: top; }
             .footer { margin-top: 18px; font-size: 11px; }
             .note { margin-top: 10px; color: #555; }
           </style>
@@ -150,6 +152,7 @@ THANK YOU
                 <tr>
                   <th>Bill</th>
                   <th>Customer</th>
+                  <th>Method</th>
                   <th>Item</th>
                   <th class="text-right">Qty</th>
                   <th class="text-right">Price</th>
@@ -160,7 +163,7 @@ THANK YOU
               <tbody>
                 ${reportRows}
                 <tr class="bill-row-end">
-                  <td colspan="6" class="text-right bold">Grand Total</td>
+                  <td colspan="7" class="text-right bold">Grand Total</td>
                   <td class="text-right bold">₹${selectedDateSales.toFixed(2)}</td>
                 </tr>
               </tbody>
@@ -263,6 +266,7 @@ THANK YOU
                   <th className="p-3 sm:p-4 uppercase font-black text-sm sm:text-base border-b border-slate-700">Date</th>
                   <th className="p-3 sm:p-4 uppercase font-black text-sm sm:text-base border-b border-slate-700">Bill ID</th>
                   <th className="p-3 sm:p-4 uppercase font-black text-sm sm:text-base border-b border-slate-700">Mobile</th>
+                  <th className="p-3 sm:p-4 uppercase font-black text-sm sm:text-base border-b border-slate-700">Method</th>
                   <th className="p-3 sm:p-4 uppercase font-black text-sm sm:text-base text-right border-b border-slate-700">Total</th>
                   <th className="p-3 sm:p-4 uppercase font-black text-sm sm:text-base text-center border-b border-slate-700">Action</th>
                 </tr>
@@ -273,6 +277,11 @@ THANK YOU
                     <td className="p-3 sm:p-4 font-semibold text-slate-100 text-sm sm:text-base">{new Date(order.createdAt).toLocaleDateString()}</td>
                     <td className="p-3 sm:p-4 font-mono text-slate-300 text-sm sm:text-base">{order.billId}</td>
                     <td className="p-3 sm:p-4 font-semibold text-slate-100 text-sm sm:text-base">{order.mobile || "GUEST"}</td>
+                    <td className="p-3 sm:p-4 font-semibold text-sm sm:text-base">
+                      <span className={`px-2 py-1 rounded-lg text-[10px] font-bold uppercase ${order.paymentMethod === 'UPI' ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30' : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'}`}>
+                        {order.paymentMethod || "CASH"}
+                      </span>
+                    </td>
                     <td className="p-3 sm:p-4 font-bold text-right text-amber-300 text-sm sm:text-base">₹{order.finalTotal}</td>
                     <td className="p-3 sm:p-4 text-center">
                       <button

@@ -22,7 +22,12 @@ const orderSchema = new mongoose.Schema({
 
   rewardPointsEarned: Number,
 
-  finalTotal: Number
+  finalTotal: Number,
+
+  paymentMethod: {
+    type: String,
+    default: "Cash"
+  }
 
 }, {
   timestamps: true

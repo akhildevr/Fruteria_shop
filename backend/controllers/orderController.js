@@ -9,7 +9,7 @@ exports.createOrder = async (req, res) => {
     console.log("📝 [API] POST /api/orders - Creating order...");
     console.log("📥 [REQUEST] Mobile:", req.body.mobile, "Items:", req.body.items.length);
 
-    const { mobile, items } = req.body;
+    const { mobile, items, paymentMethod } = req.body;
 
     let subtotal = 0;
     items.forEach(item => {
@@ -53,7 +53,7 @@ exports.createOrder = async (req, res) => {
     }
     // APPLY DISCOUNT
     let discount = 0;
-    if (amountAfterReward > 500) {
+    if (amountAfterReward >= 500) {
       discount = amountAfterReward * 0.05;
     }
 
@@ -62,7 +62,7 @@ exports.createOrder = async (req, res) => {
 
     // ADD NEW REWARD
     if (customer) { // Only earn rewards if a customer is associated
-      rewardEarned = Math.floor(finalTotal * 0.05);
+      rewardEarned = amountAfterReward < 500 ? Math.floor(finalTotal * 0.05) : 0;
       customer.rewardPoints += rewardEarned;
       customer.purchaseCount += 1;
       customer.totalSpent += finalTotal;
@@ -82,6 +82,8 @@ exports.createOrder = async (req, res) => {
     const order = await Order.create({
 
       billId,
+
+      paymentMethod: paymentMethod || "Cash",
 
       customerId: customer ? customer._id : null, // Set customerId to null for guest orders
 

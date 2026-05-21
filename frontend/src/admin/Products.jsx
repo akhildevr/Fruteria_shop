@@ -212,7 +212,7 @@ const Products = () => {
                         {categoryProducts.map((product, index) => (
                           <tr key={product._id} className={`${index % 2 === 0 ? 'bg-slate-950/50' : 'bg-slate-900/50'} hover:bg-slate-800/50 transition-colors`}>
                             <td className="p-3 sm:p-4 font-semibold text-slate-100 text-sm sm:text-base">{product.name}</td>
-                            <td className="p-3 sm:p-4 font-bold text-right text-sm sm:text-base text-emerald-300">₹{product.price}</td>
+                            <td className="p-3 sm:p-4 font-bold text-centre text-sm sm:text-base text-emerald-300">₹{product.price}</td>
                             <td className="p-3 sm:p-4 text-center">
                               <div className="flex flex-col sm:flex-row justify-center gap-2 sm:gap-3">
                                 <button onClick={() => editProduct(product)} className="premium-button bg-gradient-to-r from-cyan-400 via-sky-400 to-blue-500 text-slate-950 px-4 py-2 rounded-xl font-bold hover:from-cyan-300 hover:to-blue-400 transition-all text-sm sm:text-base">EDIT</button>

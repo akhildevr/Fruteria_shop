@@ -38,6 +38,7 @@ const Orders = () => {
 Bill ID : ${order.billId || order._id}
 Date    : ${new Date(order.createdAt).toLocaleDateString()}
 Mobile  : ${order.mobile}
+Payment : ${order.paymentMethod || "Cash"}
 --------------------------------
 ${order.items.map(item => `${item.name}\n${item.qty} x ${item.price}    ₹${item.qty * item.price}`).join("\n")}
 --------------------------------
@@ -90,6 +91,7 @@ THANK YOU
                 <th className="p-3 sm:p-4 uppercase font-black text-sm sm:text-base">Date</th>
                 <th className="p-3 sm:p-4 uppercase font-black text-sm sm:text-base">Customer</th>
                 <th className="p-3 sm:p-4 uppercase font-black text-sm sm:text-base">Items Summary</th>
+                <th className="p-3 sm:p-4 uppercase font-black text-sm sm:text-base">Method</th>
                 <th className="p-3 sm:p-4 uppercase font-black text-sm sm:text-base text-right">Total</th>
                 <th className="p-3 sm:p-4 uppercase font-black text-sm sm:text-base text-center">Action</th>
               </tr>
@@ -110,6 +112,11 @@ THANK YOU
                         </span>
                       ))}
                     </div>
+                  </td>
+                  <td className="p-3 sm:p-4">
+                    <span className={`px-2 py-1 rounded-lg text-[10px] font-bold uppercase ${order.paymentMethod === 'UPI' ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30' : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'}`}>
+                      {order.paymentMethod || "CASH"}
+                    </span>
                   </td>
                   <td className="p-3 sm:p-4 text-right">
                     <div className="font-bold text-sm sm:text-base text-emerald-300">₹{order.finalTotal}</div>
