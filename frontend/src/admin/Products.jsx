@@ -143,6 +143,8 @@ const Products = () => {
                 <option>AVIL MILK</option>
                 <option>FALOODA</option>
                 <option>ICE CREAM</option>
+                <option>FRUIT SALAD</option>
+                <option>ICE CREAM SHAKES</option>
               </select>
             </div>
           </div>
