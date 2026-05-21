@@ -12,9 +12,16 @@ const Dashboard = () => {
   const [purchases, setPurchases] = useState([]);
 
   useEffect(() => {
-    fetchOrdersData();
-    fetchTodaySalesData();
-    fetchPurchasesData();
+    const loadInitialData = async () => {
+      setLoading(true);
+      await Promise.allSettled([
+        fetchOrdersData(),
+        fetchTodaySalesData(),
+        fetchPurchasesData()
+      ]);
+      setLoading(false);
+    };
+    loadInitialData();
 
     socket.on("orderUpdated", () => {
       fetchOrdersData();
@@ -37,8 +44,6 @@ const Dashboard = () => {
       setOrders(res.data);
     } catch (error) {
       console.error("Error fetching orders", error);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -189,6 +194,10 @@ THANK YOU
     printWindow.focus();
     printWindow.print();
   };
+
+  if (loading) {
+    return <div className="min-h-screen bg-slate-950 flex items-center justify-center text-amber-300 font-bold text-2xl animate-pulse uppercase tracking-widest italic">Loading Dashboard...</div>;
+  }
 
   return (
     <div className="min-h-screen text-slate-100 px-3 py-4" style={{ background: "radial-gradient(circle at top, rgba(56,189,248,0.15), transparent 30%), linear-gradient(180deg, #020617 0%, #060d19 50%, #020616 100%)" }}>

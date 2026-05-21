@@ -6,6 +6,7 @@ import socket from "../utils/socket";
 const Customers = () => {
   const [customers, setCustomers] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => { 
     fetchCustomers(); 
@@ -19,12 +20,19 @@ const Customers = () => {
 
   const fetchCustomers = async () => {
     try {
+      setLoading(true);
       const res = await axios.get(`${import.meta.env.VITE_API_URL}/customers`);
       setCustomers(Array.isArray(res.data) ? res.data : []);
     } catch (error) {
       console.error("Error fetching customers", error);
+    } finally {
+      setLoading(false);
     }
   };
+
+  if (loading) {
+    return <div className="min-h-screen bg-slate-950 flex items-center justify-center text-amber-300 font-bold text-2xl animate-pulse uppercase tracking-widest italic">Loading Customers...</div>;
+  }
 
   const filteredCustomers = customers.filter(c => 
     c.mobile && c.mobile.includes(searchTerm)

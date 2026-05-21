@@ -11,6 +11,7 @@ const Products = () => {
   const [categoryOpen, setCategoryOpen] = useState({});
   const [alert, setAlert] = useState({ show: false, message: "" });
   const [confirm, setConfirm] = useState({ show: false, id: null });
+  const [loading, setLoading] = useState(true);
   const nameInputRef = useRef(null);
   const formSectionRef = useRef(null);
 
@@ -18,6 +19,7 @@ const Products = () => {
 
   const fetchProductsData = async () => {
     try {
+      setLoading(true);
       const res = await fetchProducts();
       setProducts(res.data);
       const openState = {};
@@ -27,6 +29,8 @@ const Products = () => {
       setCategoryOpen(openState);
     } catch (error) {
       console.error("Fetch products failed:", error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -86,6 +90,10 @@ const Products = () => {
       return map;
     }, {});
   }, [categories, filteredProducts]);
+
+  if (loading) {
+    return <div className="min-h-screen bg-slate-950 flex items-center justify-center text-amber-300 font-bold text-2xl animate-pulse uppercase tracking-widest italic">Loading Products...</div>;
+  }
 
   return (
     <div className="min-h-screen text-slate-100 px-3 py-4" style={{ background: "radial-gradient(circle at top, rgba(56,189,248,0.15), transparent 30%), linear-gradient(180deg, #020617 0%, #060d19 50%, #020616 100%)" }}>

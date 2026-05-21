@@ -9,9 +9,13 @@ const Purchase = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [alert, setAlert] = useState({ show: false, message: "" });
   const [confirm, setConfirm] = useState({ show: false, id: null });
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => { 
-    fetchPurchasesData(); 
+    const init = async () => {
+      await fetchPurchasesData();
+    };
+    init();
 
     socket.on("purchaseUpdated", fetchPurchasesData);
 
@@ -22,10 +26,13 @@ const Purchase = () => {
 
   const fetchPurchasesData = async () => {
     try {
+      setLoading(true);
       const res = await fetchPurchases();
       setPurchases(res.data);
     } catch (error) {
       console.error("Fetch purchases failed:", error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -63,6 +70,10 @@ const Purchase = () => {
   );
 
   const totalPurchaseCost = filteredPurchases.reduce((sum, p) => sum + (Number(p.price) || 0), 0);
+
+  if (loading) {
+    return <div className="min-h-screen bg-slate-950 flex items-center justify-center text-amber-300 font-bold text-2xl animate-pulse uppercase tracking-widest italic">Loading Purchases...</div>;
+  }
 
   return (
     <div className="min-h-screen text-slate-100 px-3 py-4" style={{ background: "radial-gradient(circle at top, rgba(56,189,248,0.15), transparent 30%), linear-gradient(180deg, #020617 0%, #060d19 50%, #020616 100%)" }}>
