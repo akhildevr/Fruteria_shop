@@ -11,6 +11,7 @@ connectDB();
 
 const app = express();
 const server = http.createServer(app);
+const shopName = process.env.SHOP_NAME || "Retail";
 
 const allowedOrigins = [
   'https://fruteria-shop.onrender.com',
@@ -47,7 +48,7 @@ app.use("/api/customers", require("./routes/customerRoutes"));
 app.use("/api/purchases", require("./routes/purchaseRoutes"));
 
 app.get("/", (req, res) => {
-  res.send("Fruteria API Running");
+  res.send(`${shopName} API Running`);
 });
 
 server.listen(process.env.PORT, () => {

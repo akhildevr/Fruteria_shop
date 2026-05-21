@@ -1,6 +1,6 @@
-# Fruteria Shop Management System
+# Retail Billing & Inventory Management Template
 
-A full-stack POS (Point of Sale) and inventory management application designed specifically for fruit shops.
+A professional, full-stack POS (Point of Sale) and inventory management template. Configurable for any retail business via environment variables.
 
 ## Project Structure
 
@@ -56,6 +56,6 @@ npm start
 ```bash
 cd frontend
 npm install
-# Set VITE_API_URL in .env
+# Set VITE_API_URL and VITE_SHOP_NAME in .env
 npm run dev
 ```

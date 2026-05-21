@@ -2,6 +2,7 @@ import { Link, useLocation } from "react-router-dom";
 
 const AdminNavbar = () => {
   const location = useLocation();
+  const shopName = import.meta.env.VITE_SHOP_NAME || "Shop";
 
   const links = [
     { name: "DASHBOARD", path: "/admin" },
@@ -14,7 +15,7 @@ const AdminNavbar = () => {
 
   return (
     <nav className="bg-slate-950/90 shadow-xl p-4 mb-6 rounded-2xl flex flex-wrap gap-4 sm:gap-6 items-center border border-slate-700/70"> 
-      <h2 className="text-xl sm:text-2xl font-black text-amber-300 mr-2 sm:mr-4 tracking-tighter">Fruteria Admin</h2>
+      <h2 className="text-lg sm:text-xl font-black text-amber-300 mr-2 sm:mr-4 tracking-tighter">{shopName.toUpperCase()} ADMIN</h2>
       {links.map((link) => (
         <Link
           key={link.path}

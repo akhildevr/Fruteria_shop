@@ -19,8 +19,9 @@ The frontend for the Fruteria Shop application, built with **React**, **Vite**, 
     ```bash
     npm install
     ```
-2.  Create a `.env` file and set the API URL:
+2.  Create a `.env` file and set the environment variables:
     `VITE_API_URL=http://localhost:5000/api`
+    `VITE_SHOP_NAME=Fruteria`
 3.  Start the development server:
     ```bash
     npm run dev

@@ -15,6 +15,7 @@ const BillingScreen = () => {
   const [alert, setAlert] = useState({ show: false, message: "" });
   const [paymentMethod, setPaymentMethod] = useState("Cash");
   const [cashGiven, setCashGiven] = useState("");
+  const shopName = import.meta.env.VITE_SHOP_NAME || "Shop";
 
   useEffect(() => {
     const cachedProducts = localStorage.getItem("fruteria_products");
@@ -123,7 +124,7 @@ const BillingScreen = () => {
     const isGuest = mobile.length < 10;
     const lines = [
       "================================",
-      "          FRUTERIA",
+      `          ${shopName.toUpperCase()}`,
       "================================",
       formatLine("Date", date.toLocaleDateString()),
       formatLine("Time", date.toLocaleTimeString()),
@@ -201,7 +202,7 @@ const BillingScreen = () => {
   return (
     <div className="min-h-screen text-slate-100 px-3 py-4" style={{ background: "radial-gradient(circle at top, rgba(56,189,248,0.15), transparent 30%), linear-gradient(180deg, #020617 0%, #060d19 50%, #020616 100%)" }}>
       <div className="mx-auto w-full max-w-3xl premium-card p-4 sm:p-6 md:p-8">
-        <h1 className="font-extrabold text-center tracking-tight text-amber-300" style={{ fontSize: "clamp(2.2rem, 6vw, 3rem)" }}>FRUTERIA</h1>
+        <h1 className="font-extrabold text-center tracking-tight text-amber-300" style={{ fontSize: "clamp(2.2rem, 6vw, 3rem)" }}>{shopName.toUpperCase()}</h1>
         {/* <p className="text-center uppercase tracking-[0.4em] text-slate-300/70 mb-10 text-sm sm:text-base">Premium billing experience</p> */}
 
         {/* MOBILE SECTION */}
@@ -371,7 +372,7 @@ const BillingScreen = () => {
       {alert.show && (
         <div className="fixed inset-0 flex items-center justify-center z-[100] bg-black/60 backdrop-blur-sm p-4">
           <div className="bg-white p-6 rounded-2xl max-w-sm w-full shadow-2xl text-center border border-gray-100">
-            <h2 className="text-2xl font-bold mb-2 text-orange-600">Fruteria</h2>
+            <h2 className="text-2xl font-bold mb-2 text-orange-600">{shopName}</h2>
             <p className="text-gray-700 mb-6 font-medium">{alert.message}</p>
             <button 
               onClick={() => setAlert({ show: false, message: "" })}

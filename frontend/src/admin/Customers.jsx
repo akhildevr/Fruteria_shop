@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import axios from "axios";
+import API from "../utils/api";
 import AdminNavbar from "./AdminNavbar";
 import socket from "../utils/socket";
 
@@ -21,7 +21,7 @@ const Customers = () => {
   const fetchCustomers = async () => {
     try {
       setLoading(true);
-      const res = await axios.get(`${import.meta.env.VITE_API_URL}/customers`);
+      const res = await API.get("/customers");
       setCustomers(Array.isArray(res.data) ? res.data : []);
     } catch (error) {
       console.error("Error fetching customers", error);

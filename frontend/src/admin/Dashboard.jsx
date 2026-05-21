@@ -10,6 +10,7 @@ const Dashboard = () => {
   const [selectedDate, setSelectedDate] = useState("");
   const [loading, setLoading] = useState(true);
   const [purchases, setPurchases] = useState([]);
+  const shopName = import.meta.env.VITE_SHOP_NAME || "Shop";
 
   useEffect(() => {
     const loadInitialData = async () => {
@@ -68,7 +69,7 @@ const Dashboard = () => {
   const printBill = (order) => {
     const receipt = `
 ================================
-          FRUTERIA
+          ${shopName.toUpperCase()}
 ================================
 Bill ID : ${order.billId}
 Mobile : ${order.mobile}
@@ -126,7 +127,7 @@ THANK YOU
     const html = `
       <html>
         <head>
-          <title>Fruteria Sales Report</title>
+          <title>${shopName} Sales Report</title>
           <style>
             @page { size: auto; margin: 0mm; }
             body { font-family: Arial, sans-serif; color: #111; margin: 0; font-size: 11px; line-height: 1.25; }
@@ -151,7 +152,7 @@ THANK YOU
         <body>
           <div class="report-container">
             <div class="header">
-              <h1>FRUTERIA</h1>
+              <h1>${shopName.toUpperCase()}</h1>
               <p>Daily Sales Report</p>
             </div>
             <table class="summary">
