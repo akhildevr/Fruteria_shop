@@ -1,6 +1,6 @@
 # Retail Billing API (Backend)
 
-This is the core engine of the billing software, handling transaction logic, customer loyalty points, and real-time data broadcasting.
+This is the core engine of the billing software, handling transaction logic, customer loyalty points, staff expense tracking, and real-time data broadcasting.
 
 ## 🛠 Tech Stack
 - **Runtime**: Node.js

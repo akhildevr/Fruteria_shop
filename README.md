@@ -5,7 +5,7 @@ A professional, full-stack POS (Point of Sale) and inventory management template
 ## Project Structure
 
 - `/backend`: Node.js/Express API with MongoDB/Mongoose.
-  - `/models`: Schemas for Products, Orders, Customers, Categories, and Purchases.
+  - `/models`: Schemas for Products, Orders, Customers, Categories, Purchases, and Staff Expenses.
   - `/controllers`: Logic for transaction processing and data management.
   - `/routes`: API endpoint definitions.
 - `/frontend`: React application built with Vite and Tailwind CSS.
@@ -37,6 +37,11 @@ A professional, full-stack POS (Point of Sale) and inventory management template
 ### Customer Loyalty
 - Integrated reward points system based on mobile number identification.
 - Wallet tracking and automatic redemption logic.
+
+### Staff Expense Management
+- Dedicated portal for recording individual staff expenses (Salary, Food, Other).
+- Support for "Common" expenses shared among staff (Room Rent, shared Meals).
+- Real-time cost analysis and category breakdown.
 
 ## Prerequisites
 - Node.js (v16+)

@@ -6,6 +6,7 @@ The frontend for the Fruteria Shop application, built with **React**, **Vite**, 
 - **Product Catalog**: Dynamic list of available fruits fetched from the backend.
 - **Billing System**: Interactive cart management for customer orders.
 - **Order Summary**: Displays totals, discounts, and reward points after processing.
+- **Staff Expenses**: Comprehensive management dashboard to track staff-related expenditures including salaries and food.
 
 ## Tech Stack
 - **React 18**: UI Logic.
