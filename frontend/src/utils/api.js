@@ -23,6 +23,11 @@ export const deletePurchase = (id) => API.delete(`/purchases/${id}`);
 // Customers
 export const fetchCustomer = (mobile) => API.get(`/customers/${mobile}`);
 
+// Staff Expenses
+export const fetchStaffExpenses = () => API.get("/staffexpenses");
+export const addStaffExpense = (data) => API.post("/staffexpenses", data);
+export const deleteStaffExpense = (id) => API.delete(`/staffexpenses/${id}`);
+
 // Analytics
 export const fetchTodaySales = () => API.get("/analytics/today-sales");
 
