@@ -191,6 +191,7 @@ const StaffExpenses = () => {
                   <tr>
                     <th className="p-4">Date</th>
                     <th className="p-4">Name</th>
+                    <th className="p-4">Description</th>
                     <th className="p-4">Type</th>
                     <th className="p-4 text-right">Amount</th>
                     <th className="p-4 text-center">Action</th>
@@ -202,8 +203,8 @@ const StaffExpenses = () => {
                       <td className="p-4 text-xs font-semibold">{new Date(e.date).toLocaleDateString()}</td>
                       <td className="p-4">
                         <div className={`text-xs font-black ${e.staffName === "Common" ? "text-amber-400" : "text-cyan-300"}`}>{e.staffName}</div>
-                        {e.description && <div className="text-[9px] text-slate-500 italic truncate max-w-[100px]">{e.description}</div>}
                       </td>
+                      <td className="p-4 text-sm text-slate-300 max-w-xs break-words">{e.description || "—"}</td>
                       <td className="p-4">
                         <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-800 border border-slate-700">{e.type}</span>
                       </td>
@@ -214,7 +215,7 @@ const StaffExpenses = () => {
                     </tr>
                   ))}
                   {expenses.length === 0 && (
-                    <tr><td colSpan="5" className="p-10 text-center text-slate-500 italic">No records found</td></tr>
+                    <tr><td colSpan="6" className="p-10 text-center text-slate-500 italic">No records found</td></tr>
                   )}
                 </tbody>
               </table>
