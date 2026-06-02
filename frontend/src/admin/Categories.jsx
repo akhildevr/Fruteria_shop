@@ -11,14 +11,13 @@ const Categories = () => {
   const [loading, setLoading] = useState(true);
   const [alert, setAlert] = useState({ show: false, message: "" });
   const [confirm, setConfirm] = useState({ show: false, id: null });
+  const [pageOpen, setPageOpen] = useState({ Products: true, Staff: true });
 
   useEffect(() => {
     fetchCategoriesData();
     socket.on("categoryUpdated", fetchCategoriesData);
 
-    return () => {
-      socket.off("categoryUpdated", fetchCategoriesData);
-    };
+    return () => socket.off("categoryUpdated", fetchCategoriesData);
   }, []);
 
   const fetchCategoriesData = async () => {
@@ -26,6 +25,8 @@ const Categories = () => {
       setLoading(true);
       const res = await fetchCategories();
       setCategories(res.data);
+      // no per-category collapse state anymore
+      setPageOpen(prev => ({ Products: prev.Products ?? true, Staff: prev.Staff ?? true }));
     } catch (error) {
       console.error("Fetch categories failed:", error);
       setAlert({ show: true, message: "Unable to load categories" });
@@ -35,17 +36,12 @@ const Categories = () => {
   };
 
   const saveCategory = async () => {
-    if (!name.trim()) {
-      return setAlert({ show: true, message: "Category name is required" });
-    }
-    if (!page) {
-      return setAlert({ show: true, message: "Please select a page for the category" });
-    }
+    if (!name.trim()) return setAlert({ show: true, message: "Category name is required" });
+    if (!page) return setAlert({ show: true, message: "Please select a page for the category" });
     try {
       await addCategory({ name: name.trim(), page });
       setAlert({ show: true, message: "Category added successfully" });
-      setName("");
-      setPage("");
+      setName(""); setPage("");
       fetchCategoriesData();
     } catch (error) {
       const message = error.response?.data?.error || error.message || "Error adding category";
@@ -113,33 +109,63 @@ const Categories = () => {
             ))}
           </div>
           <h2 className="font-semibold mb-4 uppercase text-slate-100 text-sm tracking-[0.14em]">Stored Categories</h2>
+
           {loading ? (
             <div className="text-slate-300">Loading categories...</div>
           ) : categories.length === 0 ? (
             <div className="text-slate-400">No categories found. Add one above.</div>
           ) : (
-            <table className="w-full text-left border-collapse">
-              <thead className="text-slate-400 text-xs uppercase tracking-wider">
-                <tr>
-                  <th className="p-3 border-b border-slate-700">Category</th>
-                  <th className="p-3 border-b border-slate-700">For Page</th>
-                  <th className="p-3 border-b border-slate-700 text-right">Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                {categories
-                  .filter((category) => viewPage === 'All' || category.page === viewPage)
-                  .map((category) => (
-                    <tr key={category._id} className="hover:bg-slate-900/70 transition-colors">
-                      <td className="p-3 font-semibold text-slate-100">{category.name}</td>
-                      <td className="p-3 text-slate-300">{category.page}</td>
-                      <td className="p-3 text-right">
-                        <button onClick={() => setConfirm({ show: true, id: category._id })} className="text-rose-400 hover:text-rose-300 font-black text-sm uppercase">Delete</button>
-                      </td>
-                    </tr>
-                  ))}
-              </tbody>
-            </table>
+            <div className="space-y-6">
+              {(viewPage === 'All' ? ['Products', 'Staff'] : [viewPage]).map((pageName) => {
+                const pageCats = categories.filter(c => c.page === pageName);
+                const pageIsOpen = pageOpen[pageName] ?? true;
+
+                return (
+                  <div key={pageName} className="premium-card p-0 overflow-hidden border border-slate-700/70 shadow-2xl">
+                    <button
+                      type="button"
+                      onClick={() => setPageOpen(prev => ({ ...prev, [pageName]: !pageIsOpen }))}
+                      className="w-full flex items-center justify-between bg-slate-950/90 px-5 py-4 text-left text-slate-100 hover:bg-slate-900 transition-colors"
+                    >
+                      <div>
+                        <div className="text-lg sm:text-xl font-black uppercase tracking-[0.2em]">{pageName}</div>
+                        <div className="text-sm text-slate-400">{pageCats.length} stored {pageName === 'Staff' ? 'names' : 'categories'}</div>
+                      </div>
+                      <span className="text-2xl">{pageIsOpen ? '−' : '+'}</span>
+                    </button>
+
+                    {pageIsOpen && (
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-left">
+                          <thead className="bg-slate-900 text-slate-100">
+                            <tr>
+                              <th className="p-3 sm:p-4 uppercase font-black text-sm sm:text-base">{pageName === 'Staff' ? 'Name' : 'Category'}</th>
+                              <th className="p-3 sm:p-4 uppercase font-black text-sm sm:text-base text-center">Action</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-slate-700">
+                            {pageCats.length === 0 ? (
+                              <tr>
+                                <td colSpan="2" className="p-4 text-center text-slate-400">No entries for {pageName}.</td>
+                              </tr>
+                            ) : (
+                              pageCats.map((category, index) => (
+                                <tr key={category._id} className={`${index % 2 === 0 ? 'bg-slate-950/50' : 'bg-slate-900/50'} hover:bg-slate-800/50 transition-colors`}>
+                                  <td className="p-3 sm:p-4 font-semibold text-slate-100 text-sm sm:text-base">{category.name}</td>
+                                  <td className="p-3 sm:p-4 text-center">
+                                    <button onClick={() => setConfirm({ show: true, id: category._id })} className="text-rose-400 hover:text-rose-300 font-black text-sm uppercase">DELETE</button>
+                                  </td>
+                                </tr>
+                              ))
+                            )}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
           )}
         </div>
       </div>

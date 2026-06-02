@@ -9,7 +9,7 @@ const staffExpenseSchema = new mongoose.Schema({
   },
   type: { 
     type: String, 
-    enum: ['Salary', 'Food', 'Room', 'Other'], 
+    enum: ['Salary', 'Food', 'Room', 'Advance', 'Other'], 
     required: true 
   },
   amount: { 
