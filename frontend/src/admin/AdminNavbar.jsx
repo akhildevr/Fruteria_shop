@@ -10,6 +10,7 @@ const AdminNavbar = () => {
     { name: "ORDERS", path: "/admin/orders" },
     { name: "PURCHASE", path: "/admin/purchase" },
     { name: "CUSTOMERS", path: "/admin/customers" },
+    { name: "CATEGORIES", path: "/admin/categories" },
     { name: "STAFF", path: "/admin/staff" },
     { name: "BILLING", path: "/" },
   ];

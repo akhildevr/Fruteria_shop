@@ -9,6 +9,10 @@ export const fetchProducts = () => API.get("/products");
 export const addProduct = (data) => API.post("/products", data);
 export const updateProduct = (id, data) => API.put(`/products/${id}`, data);
 export const deleteProduct = (id) => API.delete(`/products/${id}`);
+// Categories
+export const fetchCategories = () => API.get("/categories");
+export const addCategory = (data) => API.post("/categories", data);
+export const deleteCategory = (id) => API.delete(`/categories/${id}`);
 
 // Orders
 export const fetchOrders = () => API.get("/orders");

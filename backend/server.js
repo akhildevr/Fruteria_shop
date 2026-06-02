@@ -43,6 +43,7 @@ app.use(express.json());
 
 app.use("/api/orders", require("./routes/orderRoutes"));
 app.use("/api/products", require("./routes/productRoutes"));
+app.use("/api/categories", require("./routes/categoryRoutes"));
 app.use("/api/analytics", require("./routes/analyticsRoutes"));
 app.use("/api/customers", require("./routes/customerRoutes"));
 app.use("/api/purchases", require("./routes/purchaseRoutes"));

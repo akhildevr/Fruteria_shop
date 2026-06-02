@@ -1,10 +1,25 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { fetchProducts, addProduct, updateProduct, deleteProduct } from "../utils/api";
+import { fetchProducts, fetchCategories, addProduct, updateProduct, deleteProduct } from "../utils/api";
 import AdminNavbar from "./AdminNavbar";
+import socket from "../utils/socket";
+
+const DEFAULT_CATEGORIES = [
+  "LIME",
+  "JUICE",
+  "SHAKES",
+  "MOJITO",
+  "MILK DRINKS",
+  "AVIL MILK",
+  "FALOODA",
+  "ICE CREAM",
+  "FRUIT SALAD",
+  "ICE CREAM SHAKES"
+];
 
 const Products = () => {
   const [products, setProducts] = useState([]);
-  const [form, setForm] = useState({ id: "", name: "", price: "", category: "LIME" });
+  const [categories, setCategories] = useState([]);
+  const [form, setForm] = useState({ id: "", name: "", price: "", category: "" });
   const [editing, setEditing] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [activeCategory, setActiveCategory] = useState("All");
@@ -15,7 +30,29 @@ const Products = () => {
   const nameInputRef = useRef(null);
   const formSectionRef = useRef(null);
 
-  useEffect(() => { fetchProductsData(); }, []);
+  useEffect(() => {
+    fetchProductsData();
+    fetchCategoriesData();
+  }, []);
+
+  useEffect(() => {
+    socket.on("productUpdated", fetchProductsData);
+    socket.on("categoryUpdated", fetchCategoriesData);
+
+    return () => {
+      socket.off("productUpdated", fetchProductsData);
+      socket.off("categoryUpdated", fetchCategoriesData);
+    };
+  }, []);
+
+  const fetchCategoriesData = async () => {
+    try {
+      const res = await fetchCategories();
+      setCategories(res.data);
+    } catch (error) {
+      console.error("Fetch categories failed:", error);
+    }
+  };
 
   const fetchProductsData = async () => {
     try {
@@ -35,7 +72,7 @@ const Products = () => {
   };
 
   const saveProductAction = async () => {
-    if (!form.name || !form.price) return setAlert({ show: true, message: "Please fill all fields" });
+    if (!form.name || !form.price || !form.category) return setAlert({ show: true, message: "Please fill all fields and select a category" });
     try {
       if (editing) {
         await updateProduct(form.id, form);
@@ -44,7 +81,7 @@ const Products = () => {
         await addProduct(form);
         setAlert({ show: true, message: "Product Added Successfully" });
       }
-      setForm({ id: "", name: "", price: "", category: "LIME" });
+      setForm({ id: "", name: "", price: "", category: "" });
       setEditing(false);
       fetchProductsData();
     } catch (error) {
@@ -75,21 +112,37 @@ const Products = () => {
 
   const filteredProducts = products.filter(p => 
     p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    p.category.toLowerCase().includes(searchTerm.toLowerCase())
+    (p.category || "").toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const categories = useMemo(() => {
-    const unique = [...new Set(filteredProducts.map(p => p.category || "Uncategorized"))];
-    return ["All", ...unique.sort()];
-  }, [filteredProducts]);
+  const categoryOptions = useMemo(() => {
+    const apiCategories = categories
+      .filter((category) => category.page === "Products")
+      .map((category) => category.name);
+    return apiCategories.length ? apiCategories : DEFAULT_CATEGORIES;
+  }, [categories]);
+
+  const selectOptions = useMemo(() => {
+    const allOptions = [...new Set([...categoryOptions, form.category].filter(Boolean))];
+    return allOptions.sort();
+  }, [categoryOptions, form.category]);
+
+  const productTabs = useMemo(() => {
+    const tabSet = new Set(["All", ...categoryOptions, ...filteredProducts.map(p => p.category || "Uncategorized")]);
+    return Array.from(tabSet).sort((a, b) => {
+      if (a === "All") return -1;
+      if (b === "All") return 1;
+      return a.localeCompare(b);
+    });
+  }, [categoryOptions, filteredProducts]);
 
   const productsByCategory = useMemo(() => {
-    return categories.reduce((map, category) => {
+    return productTabs.reduce((map, category) => {
       if (category === "All") return map;
       map[category] = filteredProducts.filter(p => p.category === category);
       return map;
     }, {});
-  }, [categories, filteredProducts]);
+  }, [productTabs, filteredProducts]);
 
   if (loading) {
     return <div className="min-h-screen bg-slate-950 flex items-center justify-center text-amber-300 font-bold text-2xl animate-pulse uppercase tracking-widest italic">Loading Products...</div>;
@@ -135,16 +188,10 @@ const Products = () => {
                 onChange={(e) => setForm({ ...form, category: e.target.value })}
                 className="premium-input w-full px-4 py-3 text-[clamp(1rem,2.6vw,1.3rem)] font-semibold"
               >
-                <option>LIME</option>
-                <option>JUICE</option>
-                <option>SHAKES</option>
-                <option>MOJITO</option>
-                <option>MILK DRINKS</option>
-                <option>AVIL MILK</option>
-                <option>FALOODA</option>
-                <option>ICE CREAM</option>
-                <option>FRUIT SALAD</option>
-                <option>ICE CREAM SHAKES</option>
+                <option value="" disabled>SELECT</option>
+                {selectOptions.map((categoryOption) => (
+                  <option key={categoryOption} value={categoryOption}>{categoryOption}</option>
+                ))}
               </select>
             </div>
           </div>
@@ -175,7 +222,7 @@ const Products = () => {
 
         {/* CATEGORY TABS */}
         <div className="mb-6 flex flex-wrap gap-3">
-          {categories.map((category) => (
+          {productTabs.map((category) => (
             <button
               key={category}
               onClick={() => setActiveCategory(category)}
@@ -188,7 +235,7 @@ const Products = () => {
 
         {/* CATEGORIZED PRODUCT LIST */}
         <div className="space-y-4">
-          {categories.filter(category => category === "All" ? true : activeCategory === "All" || activeCategory === category).map((category) => {
+          {productTabs.filter(category => category === "All" ? true : activeCategory === "All" || activeCategory === category).map((category) => {
             if (category === "All") return null;
             const categoryProducts = productsByCategory[category] || [];
             if (categoryProducts.length === 0) return null;

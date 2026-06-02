@@ -63,6 +63,16 @@ const StaffExpenses = () => {
     }
   };
 
+  const uniqueStaffNames = useMemo(() => {
+    const names = new Set();
+    (Array.isArray(expenses) ? expenses : []).forEach(e => {
+      if (e.staffName && e.staffName !== "Common") {
+        names.add(e.staffName);
+      }
+    });
+    return Array.from(names).sort();
+  }, [expenses]);
+
   const analysis = useMemo(() => {
     const byType = { Salary: 0, Food: 0, Room: 0, Other: 0 };
     const byStaff = {};
@@ -95,7 +105,18 @@ const StaffExpenses = () => {
               {!isCommon && (
                 <div>
                   <label className="block text-[10px] font-black uppercase text-slate-400 mb-1">Staff Name</label>
-                  <input type="text" value={form.staffName} onChange={(e) => setForm({ ...form, staffName: e.target.value })} placeholder="Enter Name" className="premium-input w-full px-4 py-2 text-sm font-semibold" />
+                  <select
+                    value={form.staffName}
+                    onChange={(e) => setForm({ ...form, staffName: e.target.value })}
+                    className="premium-input w-full px-4 py-2 text-sm font-semibold bg-slate-900 border border-slate-700 rounded-lg text-slate-100"
+                  >
+                    <option value="" disabled>Select staff name</option>
+                    {uniqueStaffNames.length === 0 ? (
+                      <option value="" disabled>No staff names available</option>
+                    ) : uniqueStaffNames.map((name) => (
+                      <option key={name} value={name}>{name}</option>
+                    ))}
+                  </select>
                 </div>
               )}
 
@@ -106,6 +127,7 @@ const StaffExpenses = () => {
                     <option>Salary</option>
                     <option>Food</option>
                     <option>Room</option>
+                    <option>Advance</option>
                     <option>Other</option>
                   </select>
                 </div>
