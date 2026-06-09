@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useCallback } from 'react';
 import AdminNavbar from './AdminNavbar';
 import socket from '../utils/socket';
 import { fetchShopExpenses, addShopExpense, deleteShopExpense } from '../utils/api';
@@ -16,6 +16,7 @@ const ShopExpenses = () => {
     description: ''
   });
   const [alert, setAlert] = useState({ show: false, message: '' });
+  const [confirm, setConfirm] = useState({ show: false, id: null });
 
   const normalizeItem = (item) => {
     const category = item.category || (item.type === 'EMI' ? 'EMI' : item.type === 'Room Rent' ? 'Room' : 'Shop');
@@ -30,13 +31,7 @@ const ShopExpenses = () => {
     };
   };
 
-  useEffect(() => {
-    fetchData();
-    socket.on('shopExpenseUpdated', fetchData);
-    return () => socket.off('shopExpenseUpdated');
-  }, []);
-
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       setLoading(true);
       const res = await fetchShopExpenses();
@@ -47,7 +42,16 @@ const ShopExpenses = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    const initialize = async () => {
+      await fetchData();
+    };
+    initialize();
+    socket.on('shopExpenseUpdated', fetchData);
+    return () => socket.off('shopExpenseUpdated');
+  }, [fetchData]);
 
   const save = async () => {
     const submission = { ...form, amount: Number(form.amount) };
@@ -85,9 +89,11 @@ const ShopExpenses = () => {
   const remove = async (id) => {
     try {
       await deleteShopExpense(id);
+      setConfirm({ show: false, id: null });
       fetchData();
     } catch (err) {
-      setAlert({ show: true, message: 'Error deleting' });
+      console.error('Error deleting shop expense', err);
+      setAlert({ show: true, message: err.response?.data?.message || err.message || 'Error deleting' });
     }
   };
 
@@ -226,7 +232,7 @@ const ShopExpenses = () => {
                         {it.description ? ` • ${it.description}` : ''}
                       </td>
                       <td className="p-3 text-right font-bold">₹{it.amount}</td>
-                      <td className="p-3 text-center"><button onClick={() => remove(it._id)} className="text-rose-400">Delete</button></td>
+                      <td className="p-3 text-center"><button onClick={() => setConfirm({ show: true, id: it._id })} className="text-rose-400">Delete</button></td>
                     </tr>
                   ))}
                 </tbody>
@@ -241,6 +247,19 @@ const ShopExpenses = () => {
           <div className="bg-white p-6 rounded-2xl max-w-sm w-full text-center">
             <p className="text-gray-700 mb-4 font-medium">{alert.message}</p>
             <button onClick={() => setAlert({ show: false, message: '' })} className="w-full bg-amber-500 text-slate-900 py-2.5 rounded-xl font-bold">OK</button>
+          </div>
+        </div>
+      )}
+
+      {confirm.show && (
+        <div className="fixed inset-0 flex items-center justify-center z-[100] bg-black/60 p-4">
+          <div className="bg-slate-900 text-slate-100 p-6 rounded-3xl max-w-sm w-full shadow-2xl">
+            <h3 className="text-xl font-bold mb-3">Confirm Delete</h3>
+            <p className="text-slate-300 mb-6">Are you sure you want to delete this expense record? This action cannot be undone.</p>
+            <div className="flex gap-3">
+              <button onClick={() => setConfirm({ show: false, id: null })} className="flex-1 border border-slate-700 text-slate-100 py-2 rounded-xl">Cancel</button>
+              <button onClick={() => remove(confirm.id)} className="flex-1 bg-rose-500 text-white py-2 rounded-xl font-bold">Delete</button>
+            </div>
           </div>
         </div>
       )}
