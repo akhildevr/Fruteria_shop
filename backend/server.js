@@ -48,6 +48,7 @@ app.use("/api/analytics", require("./routes/analyticsRoutes"));
 app.use("/api/customers", require("./routes/customerRoutes"));
 app.use("/api/purchases", require("./routes/purchaseRoutes"));
 app.use("/api/staffexpenses", require("./routes/staffExpenseRoutes"));
+app.use("/api/shopexpenses", require("./routes/shopExpenseRoutes"));
 
 app.get("/", (req, res) => {
   res.send(`${shopName} API Running`);

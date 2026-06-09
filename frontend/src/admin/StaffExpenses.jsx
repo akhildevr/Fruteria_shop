@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from "react";
-import { fetchStaffExpenses, addStaffExpense, deleteStaffExpense } from "../utils/api";
+import { fetchStaffExpenses, addStaffExpense, deleteStaffExpense, fetchCategories } from "../utils/api";
 import AdminNavbar from "./AdminNavbar";
 import socket from "../utils/socket";
 
@@ -10,11 +10,17 @@ const StaffExpenses = () => {
   const [form, setForm] = useState({ staffName: "", type: "Salary", amount: "", date: new Date().toISOString().split('T')[0], description: "" });
   const [alert, setAlert] = useState({ show: false, message: "" });
   const [confirm, setConfirm] = useState({ show: false, id: null });
+  const [staffNames, setStaffNames] = useState([]);
 
   useEffect(() => {
     fetchExpenses();
+    fetchStaffNames();
     socket.on("staffExpenseUpdated", fetchExpenses);
-    return () => socket.off("staffExpenseUpdated");
+    socket.on("categoryUpdated", fetchStaffNames);
+    return () => {
+      socket.off("staffExpenseUpdated", fetchExpenses);
+      socket.off("categoryUpdated", fetchStaffNames);
+    };
   }, []);
 
   const fetchExpenses = async () => {
@@ -29,10 +35,25 @@ const StaffExpenses = () => {
     }
   };
 
+  const fetchStaffNames = async () => {
+    try {
+      const res = await fetchCategories();
+      const data = Array.isArray(res.data) ? res.data : [];
+      const names = data
+        .filter(c => (c.page || "").toString().trim() === "Staff")
+        .map(c => (c.name || "").toString().trim())
+        .filter(Boolean)
+        .sort((a, b) => a.localeCompare(b));
+      setStaffNames(names);
+    } catch (error) {
+      console.error('Error fetching staff names from categories', error);
+    }
+  };
+
   const saveExpense = async () => {
     const submission = { 
       ...form, 
-      staffName: isCommon ? "Common" : form.staffName,
+      staffName: isCommon ? "Common" : (form.staffName || "").trim(),
       amount: Number(form.amount)
     };
     if (!submission.staffName || !submission.date) {
@@ -63,15 +84,7 @@ const StaffExpenses = () => {
     }
   };
 
-  const uniqueStaffNames = useMemo(() => {
-    const names = new Set();
-    (Array.isArray(expenses) ? expenses : []).forEach(e => {
-      if (e.staffName && e.staffName !== "Common") {
-        names.add(e.staffName);
-      }
-    });
-    return Array.from(names).sort();
-  }, [expenses]);
+  const uniqueStaffNames = staffNames; // sourced from Categories (Staff)
 
   const analysis = useMemo(() => {
     const byType = { Salary: 0, Food: 0, Room: 0, Other: 0 };

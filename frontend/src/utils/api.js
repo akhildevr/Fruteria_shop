@@ -32,6 +32,11 @@ export const fetchStaffExpenses = () => API.get("/staffexpenses");
 export const addStaffExpense = (data) => API.post("/staffexpenses", data);
 export const deleteStaffExpense = (id) => API.delete(`/staffexpenses/${id}`);
 
+// Shop Expenses (EMI / Rent / Room Rent)
+export const fetchShopExpenses = () => API.get("/shopexpenses");
+export const addShopExpense = (data) => API.post("/shopexpenses", data);
+export const deleteShopExpense = (id) => API.delete(`/shopexpenses/${id}`);
+
 // Analytics
 export const fetchTodaySales = () => API.get("/analytics/today-sales");
 
