@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { fetchOrders, deleteOrder } from "../utils/api";
 import AdminNavbar from "./AdminNavbar";
 import socket from "../utils/socket";
@@ -6,29 +6,31 @@ import socket from "../utils/socket";
 const Orders = () => {
   const [orders, setOrders] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
+  const [selectedDate, setSelectedDate] = useState("");
   const [confirm, setConfirm] = useState({ show: false, id: null });
-  const [loading, setLoading] = useState(true);
+  const shopName = import.meta.env.VITE_SHOP_NAME || "Shop";
+
+  const fetchOrdersData = useCallback(async () => {
+    try {
+      const res = await fetchOrders();
+      setOrders(res.data);
+    } catch (error) {
+      console.error("Error fetching orders", error);
+    }
+  }, []);
 
   useEffect(() => {
-    fetchOrdersData();
+    const initialize = async () => {
+      await fetchOrdersData();
+    };
+    initialize();
 
     socket.on("orderUpdated", () => {
       fetchOrdersData();
     });
 
     return () => socket.off("orderUpdated");
-  }, []);
-
-  const fetchOrdersData = async () => {
-    try {
-      const res = await fetchOrders();
-      setOrders(res.data);
-    } catch (error) {
-      console.error("Error fetching orders", error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  }, [fetchOrdersData]);
 
   const printBill = (order) => {
     const receipt = `
@@ -62,10 +64,110 @@ THANK YOU
     }
   };
 
-  const filteredOrders = orders.filter(order => 
+  const formatOrderDate = (date) => new Date(date).toLocaleDateString("en-CA");
+
+  const selectedDateOrders = selectedDate
+    ? orders.filter(order => formatOrderDate(order.createdAt) === selectedDate)
+    : orders;
+
+  const selectedDateSales = selectedDateOrders.reduce((a, b) => a + b.finalTotal, 0);
+
+  const filteredOrders = selectedDateOrders.filter(order =>
     (order.mobile && order.mobile.includes(searchTerm)) || 
     (order.billId && order.billId.toLowerCase().includes(searchTerm.toLowerCase()))
   );
+
+  const printSalesReport = () => {
+    const reportOrders = selectedDateOrders;
+    const reportRows = reportOrders.map((order) => 
+      order.items.map((item, i) => {
+        const isFirst = i === 0;
+        const isLast = i === order.items.length - 1;
+        return `
+          <tr class="${isLast ? 'bill-row-end' : ''}">
+            <td>${isFirst ? (order.billId || order._id) : ""}</td>
+            <td>${isFirst ? (order.mobile && order.mobile.toLowerCase() !== "guest" ? order.mobile : "Guest") : ""}</td>
+            <td>${isFirst ? (order.paymentMethod || "Cash") : ""}</td>
+            <td>${item.name}</td>
+            <td class="text-right">${item.qty}</td>
+            <td class="text-right">₹${item.price}</td>
+            <td class="text-right">₹${item.qty * item.price}</td>
+            <td class="text-right bold">${isLast ? `₹${order.finalTotal}` : ""}</td>
+          </tr>`;
+      }).join("")
+    ).join("");
+
+    const html = `
+      <html>
+        <head>
+          <title>${shopName} Sales Report</title>
+          <style>
+            @page { size: auto; margin: 0mm; }
+            body { font-family: Arial, sans-serif; color: #111; margin: 0; font-size: 11px; line-height: 1.25; }
+            .report-container { padding: 20mm; }
+            .header { text-align: center; margin-bottom: 18px; }
+            .header h1 { margin: 0; font-size: 24px; letter-spacing: 1px; }
+            .header p { margin: 4px 0 0; font-size: 12px; color: #333; }
+            .summary { width: 100%; margin-bottom: 16px; border-collapse: collapse; }
+            .summary td { padding: 6px 8px; font-size: 12px; vertical-align: bottom; }
+            .summary .label { font-weight: bold; width: 140px; }
+            .report-table { width: 100%; border-collapse: collapse; font-size: 11px; }
+            .report-table th { border: 1px solid #ccc; border-bottom: 2px solid #888; padding: 6px 8px; vertical-align: bottom; background: #f5f5f5; text-align: left; }
+            .report-table td { padding: 6px 8px; vertical-align: bottom; border-left: 1px solid #ccc; border-right: 1px solid #ccc; }
+            .report-table tr.bill-row-end td { border-bottom: 1px solid #ccc; }
+            .report-table .text-right { text-align: right; }
+            .report-table .bold { font-weight: bold; }
+            .report-table td:first-child, .report-table td:nth-child(2), .report-table td:nth-child(3) { vertical-align: top; }
+            .footer { margin-top: 18px; font-size: 11px; }
+            .note { margin-top: 10px; color: #555; }
+          </style>
+        </head>
+        <body>
+          <div class="report-container">
+            <div class="header">
+              <h1>${shopName.toUpperCase()}</h1>
+              <p>Daily Sales Report</p>
+            </div>
+            <table class="summary">
+              <tr><td class="label">Report Date</td><td>${selectedDate}</td></tr>
+              <tr><td class="label">Total Orders</td><td>${reportOrders.length}</td></tr>
+              <tr><td class="label">Total Sales</td><td>₹${selectedDateSales.toFixed(2)}</td></tr>
+            </table>
+            <table class="report-table">
+              <thead>
+                <tr>
+                  <th>Bill</th>
+                  <th>Customer</th>
+                  <th>Method</th>
+                  <th>Item</th>
+                  <th class="text-right">Qty</th>
+                  <th class="text-right">Price</th>
+                  <th class="text-right">Amount</th>
+                  <th class="text-right">Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${reportRows}
+                <tr class="bill-row-end">
+                  <td colspan="7" class="text-right bold">Grand Total</td>
+                  <td class="text-right bold">₹${selectedDateSales.toFixed(2)}</td>
+                </tr>
+              </tbody>
+            </table>
+            <div class="footer">
+              <p class="bold">Report generated on: ${new Date().toLocaleString()}</p>
+              <p class="note">This report contains all orders for the selected date and provides a summary of sales totals and item details.</p>
+            </div>
+          </div>
+        </body>
+      </html>`;
+
+    const printWindow = window.open("", "_blank");
+    printWindow.document.write(html);
+    printWindow.document.close();
+    printWindow.focus();
+    printWindow.print();
+  };
 
   return (
     <div className="min-h-screen text-slate-100 px-3 py-4" style={{ background: "radial-gradient(circle at top, rgba(56,189,248,0.15), transparent 30%), linear-gradient(180deg, #020617 0%, #060d19 50%, #020616 100%)" }}>
@@ -73,15 +175,64 @@ THANK YOU
       <h1 className="font-extrabold text-center tracking-tight text-amber-300 mb-8" style={{ fontSize: "clamp(2.2rem, 6vw, 3rem)" }}>Order History</h1>
 
       <div className="mx-auto w-full max-w-6xl">
-        <div className="mb-6">
-          <label className="block font-semibold mb-2 uppercase text-slate-100 text-lg sm:text-xl tracking-[0.14em]">Filter Orders</label>
-          <input 
-            type="text" 
-            placeholder="🔍 Mobile or Bill ID..."
-            className="premium-input w-full md:w-1/2 px-4 py-3 text-[clamp(0.9rem,2.2vw,1.2rem)] font-semibold"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
+        <div className="premium-card p-4 sm:p-6 shadow-2xl border border-slate-700/70 mb-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+            <div>
+              <label className="block text-sm sm:text-base font-semibold text-slate-100 mb-2 uppercase tracking-[0.14em]">Search Orders</label>
+              <input
+                type="text"
+                placeholder="🔍 Mobile or Bill ID..."
+                className="premium-input w-full px-4 py-3 text-[clamp(0.9rem,2.2vw,1.2rem)] font-semibold"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm sm:text-base font-semibold text-slate-100 mb-2 uppercase tracking-[0.14em]">Filter by Date</label>
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4">
+                <input
+                  type="date"
+                  className="premium-input flex-1 px-4 py-3 text-[clamp(0.9rem,2.2vw,1.2rem)] font-semibold"
+                  value={selectedDate}
+                  onChange={(e) => setSelectedDate(e.target.value)}
+                />
+                {selectedDate && (
+                  <>
+                    <button
+                      onClick={() => setSelectedDate("")}
+                      className="premium-button-secondary bg-slate-900/95 text-slate-100 px-4 py-3 rounded-2xl font-bold border border-slate-600 shadow-lg hover:border-slate-400 transition-all text-sm sm:text-base"
+                    >
+                      Clear
+                    </button>
+                    <button
+                      onClick={printSalesReport}
+                      className="premium-button bg-gradient-to-r from-cyan-400 to-blue-500 text-slate-950 px-4 py-3 rounded-2xl font-bold shadow-lg hover:from-cyan-300 hover:to-blue-400 transition-all text-sm sm:text-base whitespace-nowrap"
+                    >
+                      Print Report
+                    </button>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {selectedDate && (
+            <div className="mt-4 pt-4 border-t border-slate-600 grid grid-cols-2 sm:grid-cols-3 gap-3">
+              <div className="bg-slate-900/50 p-3 rounded-lg">
+                <p className="text-xs uppercase text-slate-400 font-semibold">Date</p>
+                <p className="text-lg font-bold text-amber-300">{selectedDate}</p>
+              </div>
+              <div className="bg-slate-900/50 p-3 rounded-lg">
+                <p className="text-xs uppercase text-slate-400 font-semibold">Total Orders</p>
+                <p className="text-lg font-bold text-emerald-300">{selectedDateOrders.length}</p>
+              </div>
+              <div className="bg-slate-900/50 p-3 rounded-lg">
+                <p className="text-xs uppercase text-slate-400 font-semibold">Day Sales</p>
+                <p className="text-lg font-bold text-violet-300">₹{selectedDateSales}</p>
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="premium-card rounded-2xl shadow-2xl overflow-hidden border border-slate-700/70">
@@ -97,7 +248,9 @@ THANK YOU
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-700">
-              {filteredOrders.map((order, index) => (
+              {filteredOrders.length === 0 ? (
+                <tr><td colSpan="6" className="p-6 text-center text-slate-400">No orders found</td></tr>
+              ) : filteredOrders.map((order, index) => (
                 <tr key={order._id} className={`${index % 2 === 0 ? 'bg-slate-950/50' : 'bg-slate-900/50'} hover:bg-slate-800/50 transition-colors`}>
                   <td className="p-3 sm:p-4 font-semibold text-slate-100 text-sm sm:text-base">{new Date(order.createdAt).toLocaleDateString()}</td>
                   <td className="p-3 sm:p-4">
