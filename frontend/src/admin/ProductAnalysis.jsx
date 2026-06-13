@@ -155,15 +155,15 @@ const ProductAnalysis = () => {
       <div className="mx-auto max-w-6xl space-y-6">
         <div className="premium-card p-6 border border-slate-200 shadow-xl bg-white/95 backdrop-blur-sm">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-            <div className="rounded-3xl bg-slate-50 p-5 border border-slate-200 shadow-sm">
+            <div className="rounded-3xl bg-white p-5 border border-slate-200 shadow-sm">
               <p className="text-xs uppercase tracking-[0.25em] text-slate-500 mb-3">Distinct Products Sold</p>
               <p className="text-3xl font-black text-slate-900">{overallTotals.totalProducts}</p>
             </div>
-            <div className="rounded-3xl bg-slate-50 p-5 border border-slate-200 shadow-sm">
+            <div className="rounded-3xl bg-white p-5 border border-slate-200 shadow-sm">
               <p className="text-xs uppercase tracking-[0.25em] text-slate-500 mb-3">Total Quantity Sold</p>
               <p className="text-3xl font-black text-slate-900">{overallTotals.totalQty}</p>
             </div>
-            <div className="rounded-3xl bg-slate-50 p-5 border border-slate-200 shadow-sm">
+            <div className="rounded-3xl bg-white p-5 border border-slate-200 shadow-sm">
               <p className="text-xs uppercase tracking-[0.25em] text-slate-500 mb-3">Total Revenue</p>
               <p className="text-3xl font-black text-emerald-600">₹{overallTotals.totalRevenue.toFixed(2)}</p>
             </div>
@@ -172,7 +172,7 @@ const ProductAnalysis = () => {
 
         <div className="premium-card p-6 border border-slate-200 shadow-xl bg-white/95 backdrop-blur-sm">
           <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-            <div className="rounded-3xl bg-slate-50 p-5 border border-slate-200 shadow-sm">
+            <div className="rounded-3xl bg-white p-5 border border-slate-200 shadow-sm">
               <div className="flex items-center justify-between mb-4 gap-3">
                 <div>
                   <p className="text-xs uppercase tracking-[0.25em] text-slate-500 mb-2">Monthly Revenue Trend</p>
@@ -192,7 +192,7 @@ const ProductAnalysis = () => {
               </div>
             </div>
 
-            <div className="rounded-3xl bg-slate-50 p-5 border border-slate-200 shadow-sm">
+            <div className="rounded-3xl bg-white p-5 border border-slate-200 shadow-sm">
               <div className="flex items-center justify-between mb-4 gap-3">
                 <div>
                   <p className="text-xs uppercase tracking-[0.25em] text-slate-500 mb-2">Revenue Share</p>
@@ -234,7 +234,7 @@ const ProductAnalysis = () => {
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 placeholder="Search by product name"
-                className="premium-input w-full px-4 py-3 bg-slate-50 border border-slate-200 text-slate-900"
+                className="premium-input w-full px-4 py-3 bg-white border border-slate-200 text-slate-900"
               />
             </div>
             <div>
@@ -242,14 +242,14 @@ const ProductAnalysis = () => {
               <select
                 value={currentMonth}
                 onChange={(e) => setSelectedMonth(e.target.value)}
-                className="premium-input w-full px-4 py-3 bg-slate-50 border border-slate-200 text-slate-900"
+                className="premium-input w-full px-4 py-3 bg-white border border-slate-200 text-slate-900"
               >
                 {monthOptions.map((month) => (
                   <option key={month} value={month}>{monthLabel(month)}</option>
                 ))}
               </select>
             </div>
-            <div className="rounded-3xl bg-slate-50 p-5 border border-slate-200 shadow-sm flex flex-col justify-between">
+            <div className="rounded-3xl bg-white p-5 border border-slate-200 shadow-sm flex flex-col justify-between">
               <div>
                 <p className="text-xs uppercase tracking-[0.25em] text-slate-500 mb-3">Selected Month Revenue</p>
                 <p className="text-3xl font-black text-slate-900">₹{selectedMonthTotals.totalRevenue.toFixed(2)}</p>
@@ -266,7 +266,7 @@ const ProductAnalysis = () => {
               <p className="text-xs uppercase tracking-[0.25em] text-slate-500 mb-3">Top Products Overall</p>
               <div className="space-y-3 max-h-72 overflow-y-auto pr-2">
                 {productStats.slice(0, 5).map((product) => (
-                  <div key={product.productId} className="rounded-2xl bg-slate-50 p-3 border border-slate-200">
+                  <div key={product.productId} className="rounded-2xl bg-white p-3 border border-slate-200">
                     <div className="flex justify-between items-center gap-3">
                       <p className="font-semibold text-slate-900">{product.name}</p>
                       <span className="text-xs uppercase tracking-[0.2em] text-slate-500">₹{product.revenue.toFixed(0)}</span>
@@ -281,7 +281,7 @@ const ProductAnalysis = () => {
               <p className="text-xs uppercase tracking-[0.25em] text-slate-500 mb-3">Top Products This Month</p>
               <div className="space-y-3 max-h-72 overflow-y-auto pr-2">
                 {activeMonthProducts.slice(0, 5).map((product) => (
-                  <div key={product.productId} className="rounded-2xl bg-slate-50 p-3 border border-slate-200">
+                  <div key={product.productId} className="rounded-2xl bg-white p-3 border border-slate-200">
                     <div className="flex justify-between items-center gap-3">
                       <p className="font-semibold text-slate-900">{product.name}</p>
                       <span className="text-xs uppercase tracking-[0.2em] text-slate-500">₹{product.revenue.toFixed(0)}</span>
@@ -300,7 +300,7 @@ const ProductAnalysis = () => {
         <div className="premium-card rounded-2xl shadow-xl overflow-hidden border border-slate-200 bg-white/95">
           <div className="overflow-x-auto">
             <table className="w-full text-left">
-              <thead className="bg-slate-100 text-slate-900">
+              <thead className="bg-white text-slate-900">
                 <tr>
                   <th className="p-3 uppercase text-slate-500 text-xs tracking-[0.2em]">Product</th>
                   <th className="p-3 uppercase text-slate-500 text-xs tracking-[0.2em] text-right">Month Qty</th>
@@ -317,7 +317,7 @@ const ProductAnalysis = () => {
                 ) : filteredProducts.map((product) => {
                   const monthProduct = currentMonth && productStatsByMonth[currentMonth] ? productStatsByMonth[currentMonth][product.productId] : null;
                   return (
-                    <tr key={product.productId} className="bg-slate-50 hover:bg-slate-100 transition-colors">
+                    <tr key={product.productId} className="bg-white hover:bg-white transition-colors">
                       <td className="p-3 text-slate-900 font-semibold">{product.name}</td>
                       <td className="p-3 text-center text-slate-700">{monthProduct?.qty || 0}</td>
                       <td className="p-3 text-center text-emerald-600">₹{(monthProduct?.revenue || 0).toFixed(2)}</td>
