@@ -1,39 +1,48 @@
 # Retail Billing API (Backend)
 
-This is the core engine of the billing software, handling transaction logic, customer loyalty points, staff expense tracking, and real-time data broadcasting.
+Core backend for the Fruteria billing app — handles orders, customers, purchases, staff expenses, and real-time broadcasts.
 
-## 🛠 Tech Stack
-- **Runtime**: Node.js
-- **Framework**: Express.js
-- **Database**: MongoDB (Mongoose ODM)
-- **Real-time**: Socket.io
+## Tech
+- Node.js + Express
+- MongoDB with Mongoose
+- Socket.io for realtime events
 
-## ⚙️ Setup Instructions
-1. Install dependencies: `npm install`
-2. Configure environment variables in `.env`:
-   - `PORT`: Server port (e.g., 5000)
-   - `MONGODB_URI`: Your MongoDB connection string
-   - `SHOP_NAME`: The name of your shop (e.g., "Fruteria")
-3. Start the server: `npm start`
+## Local development
 
-## 📂 Key Folders
-- `/controllers`: Contains business logic (e.g., calculate discounts/rewards, generate bill IDs).
-- `/models`: Database schemas for data persistence.
-- `/routes`: Express routes mapping endpoints to controllers.
+1. Install dependencies
 
-## 🏗 Things to Add (For Production)
-To upgrade this from a template to a commercial product, consider adding:
+```bash
+cd backend
+npm install
+```
 
-1. **Authentication & Authorization**:
-   - Implement JWT (JSON Web Tokens) to secure API routes.
-   - Add User Roles: `Admin` (full access) and `Cashier` (billing only).
-2. **Data Validation**:
-   - Use `Joi` or `Zod` to validate incoming request bodies (e.g., ensuring mobile numbers are exactly 10 digits).
-3. **Image Management**:
-   - Integrate `Multer` and `Cloudinary` to allow uploading product images.
-4. **Advanced Logging**:
-   - Implement `Winston` or `Morgan` for detailed server-side error and request logging.
-5. **Backup Logic**:
-   - Automated scripts for daily MongoDB backups.
-6. **Barcode Integration**:
-   - Add an `sku` field to products to support barcode scanner lookups.
+2. Create a `.env` file with at least:
+
+- `MONGODB_URI` — MongoDB connection string
+- `PORT` — optional, default used in code
+- `SHOP_NAME` — optional shop display name
+- (optional) `JWT_SECRET` — for future auth
+
+3. Start for development (uses `nodemon`):
+
+```bash
+npm run dev
+```
+
+Or run production: `npm start`
+
+## Notes & recent changes
+
+- Analytics: `today` sales calculation now uses a 2:00 AM cutoff to better align with store shifts.
+- The backend exposes REST endpoints under `/api` — see `routes/` for details.
+
+## Useful folders
+
+- `controllers/` — business logic
+- `models/` — Mongoose schemas
+- `routes/` — API endpoints
+
+## Production considerations
+
+- Add authentication & role-based access for admin/cashier.
+- Add request validation (Joi/Zod), logging, and secure image storage for product photos.

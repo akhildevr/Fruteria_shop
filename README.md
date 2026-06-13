@@ -1,66 +1,58 @@
-# Retail Billing & Inventory Management Template
+# Fruteria — Retail Billing & Inventory
 
-A professional, full-stack POS (Point of Sale) and inventory management template. Configurable for any retail business via environment variables.
+Full-stack POS (Point of Sale) and inventory management template tailored for small retail shops.
 
-## Project Structure
+## Project layout
 
-- `/backend`: Node.js/Express API with MongoDB/Mongoose.
-  - `/models`: Schemas for Products, Orders, Customers, Categories, Purchases, and Staff Expenses.
-  - `/controllers`: Logic for transaction processing and data management.
-  - `/routes`: API endpoint definitions.
-- `/frontend`: React application built with Vite and Tailwind CSS.
-  - `/src/admin`: Management views for Products, Orders, Purchases, and Customers.
-  - `/src/billing`: POS interface for sales.
+- `backend/` — Node.js + Express API (MongoDB via Mongoose).
+- `frontend/` — React (Vite) admin and billing UI.
 
-## Core Functionalities
+## Quick features
 
-### Dashboard & Analytics
-- Real-time sales monitoring (Today's Sales, Total Sales, Total Purchases).
-- Daily Sales Report generation with PDF export capability.
+- Real-time billing and socket-based updates.
+- Inventory CRUD and categorization.
+- Purchase and staff expense tracking.
+- Customer loyalty points and simple discount rules.
+- Admin dashboard with analytics and a Product Sales Analysis tab.
 
-### Inventory Management
-- Create, Read, Update, and Delete (CRUD) operations for products.
-- Categorization and pricing management via `productController.js`.
+Recent notable UI/behavior changes
 
-### Billing & Orders
-- Responsive billing screen for quick item selection.
-- Real-time cart updates.
-- Support for **Cash** and **UPI** payment methods.
-- Built-in Cash Calculator (Received vs Balance) for cash transactions.
-- Automated logic: 5% Discount for orders ≥ ₹500, or 5% Reward Points for orders < ₹500.
-
-### Purchase Management
-- Record and track business expenses/inventory purchases.
-- Support for units: KG, G, Ltr, PCS.
-- Historical tracking with cost analysis.
-
-### Customer Loyalty
-- Integrated reward points system based on mobile number identification.
-- Wallet tracking and automatic redemption logic.
-
-### Staff Expense Management
-- Dedicated portal for recording individual staff expenses (Salary, Food, Other).
-- Support for "Common" expenses shared among staff (Room Rent, shared Meals).
-- Real-time cost analysis and category breakdown.
+- Admin navbar is now fixed at the top for easier navigation.
+- Global font changed to Inter for a cleaner look.
+- Product Sales Analysis page uses a light card layout (route: `/admin/product-analysis`).
+- Backend analytics use a 2:00 AM cutoff for "today" sales attribution.
 
 ## Prerequisites
+
 - Node.js (v16+)
-- MongoDB (Local or Atlas)
+- MongoDB (local or Atlas)
 
-## Getting Started
+## Getting started (dev)
 
-### 1. Backend Setup
+1. Start the backend
+
 ```bash
 cd backend
 npm install
-# Add MONGODB_URI and PORT to your .env
-npm start
+# create .env with MONGODB_URI and PORT (optional: SHOP_NAME)
+npm run dev
 ```
 
-### 2. Frontend Setup
+2. Start the frontend
+
 ```bash
 cd frontend
 npm install
-# Set VITE_API_URL and VITE_SHOP_NAME in .env
+# create .env with VITE_API_URL and VITE_SHOP_NAME
 npm run dev
 ```
+
+## Where to look
+
+- Backend entry: `backend/server.js`
+- Frontend entry: `frontend/src/main.jsx`
+- Admin components: `frontend/src/admin`
+
+If you want a production build, run `npm run build` in the `frontend` folder and deploy the built files behind the backend or a static host.
+
+If you'd like, I can expand these READMEs with deployment steps, env examples, or a contributor guide.

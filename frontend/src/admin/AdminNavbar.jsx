@@ -8,6 +8,7 @@ const AdminNavbar = () => {
     { name: "DASHBOARD", path: "/admin" },
     { name: "PRODUCTS", path: "/admin/products" },
     { name: "ORDERS", path: "/admin/orders" },
+    { name: "PRODUCT ANALYSIS", path: "/admin/product-analysis" },
     { name: "PURCHASE", path: "/admin/purchase" },
     { name: "CUSTOMERS", path: "/admin/customers" },
     { name: "CATEGORIES", path: "/admin/categories" },

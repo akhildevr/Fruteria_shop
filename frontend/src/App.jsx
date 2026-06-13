@@ -8,6 +8,7 @@ import BillingScreen from "./billing/BillingScreen";
 import Dashboard from "./admin/Dashboard";
 import Products from "./admin/Products";
 import Orders from "./admin/Orders";
+import ProductAnalysis from "./admin/ProductAnalysis";
 import Purchase from "./admin/Purchase";
 import Customers from "./admin/Customers";
 import StaffExpenses from "./admin/StaffExpenses";
@@ -40,6 +41,11 @@ function App() {
         <Route
           path="/admin/orders"
           element={<Orders />}
+        />
+
+        <Route
+          path="/admin/product-analysis"
+          element={<ProductAnalysis />}
         />
 
         <Route
