@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { fetchOrders, fetchTodaySales, fetchPurchases } from "../utils/api";
+import { getBusinessDate } from "../utils/dateUtils";
 import AdminNavbar from "./AdminNavbar";
 import socket from "../utils/socket";
 
@@ -89,10 +90,8 @@ THANK YOU
 
   const totalSales = orders.reduce((a, b) => a + b.finalTotal, 0);
 
-  const formatOrderDate = (date) => new Date(date).toLocaleDateString("en-CA");
-
   const selectedDateOrders = selectedDate
-    ? orders.filter(order => formatOrderDate(order.createdAt) === selectedDate)
+    ? orders.filter(order => getBusinessDate(order.createdAt) === selectedDate)
     : orders;
 
   const selectedDateSales = selectedDateOrders.reduce((a, b) => a + b.finalTotal, 0);

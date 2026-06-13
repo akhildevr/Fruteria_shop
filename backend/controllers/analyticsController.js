@@ -7,17 +7,16 @@ exports.todaySales = async (req, res) => {
     console.log("📊 [API] GET /api/analytics/today-sales - Fetching today's sales...");
 
     const start = new Date();
-
-    start.setHours(0, 0, 0, 0);
+    start.setHours(2, 0, 0, 0);  // Start from 2 AM today
 
     const end = new Date();
-
-    end.setHours(23, 59, 59, 999);
+    end.setDate(end.getDate() + 1);
+    end.setHours(2, 0, 0, 0);  // End at 2 AM tomorrow
 
     const orders = await Order.find({
       createdAt: {
         $gte: start,
-        $lte: end
+        $lt: end
       }
     });
 
