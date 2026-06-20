@@ -11,7 +11,26 @@ const Dashboard = () => {
   const [selectedDate, setSelectedDate] = useState("");
   const [loading, setLoading] = useState(true);
   const [purchases, setPurchases] = useState([]);
+  const [showMobileField, setShowMobileField] = useState(() => {
+    const saved = localStorage.getItem("showMobileFieldInBilling");
+    return saved !== null ? JSON.parse(saved) : true;
+  });
   const shopName = import.meta.env.VITE_SHOP_NAME || "Shop";
+  const todayStr = new Date().toISOString().split("T")[0];
+
+  const formatCurrency = (value) => {
+    const numberValue = typeof value === "number" ? value : Number(value) || 0;
+    return numberValue.toLocaleString("en-IN", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+  };
+
+  const toggleMobileField = () => {
+    const newValue = !showMobileField;
+    setShowMobileField(newValue);
+    localStorage.setItem("showMobileFieldInBilling", JSON.stringify(newValue));
+  };
 
   useEffect(() => {
     const loadInitialData = async () => {
@@ -73,7 +92,8 @@ const Dashboard = () => {
           ${shopName.toUpperCase()}
 ================================
 Bill ID : ${order.billId}
-Mobile : ${order.mobile}
+Date    : ${new Date(order.createdAt).toLocaleDateString()}
+Mobile  : ${order.mobile}
 Payment : ${order.paymentMethod || "Cash"}
 --------------------------------
 ${order.items.map(item => `${item.name}\n${item.qty} x ${item.price}`).join("\n")}
@@ -98,6 +118,11 @@ THANK YOU
 
   const totalPurchaseCost = purchases.reduce((a, b) => a + (Number(b.price) || 0), 0);
 
+  // Today's sales breakdown by payment method
+  const todayOrders = orders.filter(order => getBusinessDate(order.createdAt) === todayStr);
+  const todayCashSales = todayOrders.filter(o => !o.paymentMethod || o.paymentMethod === "Cash").reduce((a, b) => a + b.finalTotal, 0);
+  const todayUpiSales = todayOrders.filter(o => o.paymentMethod === "UPI").reduce((a, b) => a + b.finalTotal, 0);
+
   const filteredOrders = selectedDateOrders.filter(order => 
     (order.mobile && order.mobile.includes(searchTerm)) || 
     (order.billId && order.billId.toLowerCase().includes(searchTerm.toLowerCase()))
@@ -109,10 +134,15 @@ THANK YOU
       order.items.map((item, i) => {
         const isFirst = i === 0;
         const isLast = i === order.items.length - 1;
+        const customerName = order.mobile && order.mobile.toLowerCase() !== "guest" ? order.mobile : "Guest";
+        const orderDate = new Date(order.createdAt);
+        const day = String(orderDate.getDate()).padStart(2, '0');
+        const month = orderDate.toLocaleString('en-GB', { month: 'short' }).toUpperCase();
+        const year = orderDate.getFullYear();
+        const billInfo = isFirst ? `<strong>${order.billId || order._id}</strong><br>${day}-${month}-${year}<br>${customerName}` : "";
         return `
           <tr class="${isLast ? 'bill-row-end' : ''}">
-            <td>${isFirst ? (order.billId || order._id) : ""}</td>
-            <td>${isFirst ? (order.mobile && order.mobile.toLowerCase() !== "guest" ? order.mobile : "Guest") : ""}</td>
+            <td>${billInfo}</td>
             <td>${isFirst ? (order.paymentMethod || "Cash") : ""}</td>
             <td>${item.name}</td>
             <td class="text-right">${item.qty}</td>
@@ -204,21 +234,52 @@ THANK YOU
       <AdminNavbar />
       <h1 className="font-extrabold text-center tracking-tight text-amber-300 mb-8" style={{ fontSize: "clamp(2.2rem, 6vw, 3rem)" }}>DASHBOARD</h1>
 
+      <div className="mx-auto w-full max-w-6xl mb-8">
+        <div className="bg-slate-950/90 p-4 rounded-[2rem] border border-slate-700/70 shadow-xl">
+          <div className="flex items-center justify-between gap-4">
+            <label className="text-sm sm:text-base font-semibold text-slate-100 uppercase tracking-[0.14em]">Mobile Field in Billing</label>
+            <button
+              onClick={toggleMobileField}
+              className={`relative inline-flex items-center h-10 w-16 rounded-full transition-all duration-300 ${
+                showMobileField
+                  ? "bg-emerald-500 shadow-lg shadow-emerald-500/50"
+                  : "bg-slate-700 shadow-lg shadow-slate-700/50"
+              }`}
+            >
+              <span
+                className={`inline-block h-8 w-8 transform rounded-full bg-white transition-transform duration-300 ${
+                  showMobileField ? "translate-x-1" : "-translate-x-1"
+                }`}
+              />
+            </button>
+            <span className={`text-sm font-bold uppercase tracking-wide ${
+              showMobileField ? "text-emerald-400" : "text-slate-400"
+            }`}>
+              {showMobileField ? "ENABLED" : "DISABLED"}
+            </span>
+          </div>
+        </div>
+      </div>
+
       <div className="mx-auto w-full max-w-6xl">
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-6 mb-8">
           <div className="bg-slate-950/90 p-4 rounded-[2rem] border border-slate-700/70 shadow-xl text-center flex flex-col justify-center min-h-[120px]">
             <h2 className="text-[9px] sm:text-[11px] font-semibold text-slate-100 mb-2 uppercase tracking-[0.07em]">Today's Sales</h2>
-            <p className="text-xl sm:text-2xl font-black text-amber-300">₹{todaySales}</p>
+            <p className="text-xl sm:text-2xl font-black text-amber-300">₹{formatCurrency(todaySales)}</p>
+            <div className="flex justify-center gap-3 mt-2">
+              <span className="text-xs sm:text-sm font-bold text-emerald-400">CASH: ₹{formatCurrency(todayCashSales)}</span>
+              <span className="text-xs sm:text-sm font-bold text-blue-400">UPI: ₹{formatCurrency(todayUpiSales)}</span>
+            </div>
           </div>
 
           <div className="bg-slate-950/90 p-4 rounded-[2rem] border border-slate-700/70 shadow-xl text-center flex flex-col justify-center min-h-[120px]">
             <h2 className="text-[9px] sm:text-[11px] font-semibold text-slate-100 mb-2 uppercase tracking-[0.07em]">Total Sales</h2>
-            <p className="text-xl sm:text-2xl font-black text-cyan-300">₹{totalSales}</p>
+            <p className="text-xl sm:text-2xl font-black text-cyan-300">₹{formatCurrency(totalSales)}</p>
           </div>
 
           <div className="bg-slate-950/90 p-4 rounded-[2rem] border border-slate-700/70 shadow-xl text-center flex flex-col justify-center min-h-[120px]">
             <h2 className="text-[9px] sm:text-[11px] font-semibold text-slate-100 mb-2 uppercase tracking-[0.07em]">Total Purchase</h2>
-            <p className="text-xl sm:text-2xl font-black text-rose-400">₹{totalPurchaseCost}</p>
+            <p className="text-xl sm:text-2xl font-black text-rose-400">₹{formatCurrency(totalPurchaseCost)}</p>
           </div>
 
           <div className="bg-slate-950/90 p-4 rounded-[2rem] border border-slate-700/70 shadow-xl text-center flex flex-col justify-center min-h-[120px]">
@@ -228,7 +289,7 @@ THANK YOU
 
           <div className="bg-slate-950/90 p-4 rounded-[2rem] border border-slate-700/70 shadow-xl text-center flex flex-col justify-center min-h-[120px]">
             <h2 className="text-[9px] sm:text-[11px] font-semibold text-slate-100 mb-2 uppercase tracking-[0.07em]">Day Sales</h2>
-            <p className="text-xl sm:text-2xl font-black text-violet-300">{selectedDate ? `₹${selectedDateSales}` : "—"}</p>
+            <p className="text-xl sm:text-2xl font-black text-violet-300">{selectedDate ? `₹${formatCurrency(selectedDateSales)}` : "—"}</p>
             <p className="text-sm sm:text-base mt-2 text-slate-400">{selectedDate ? `${selectedDateOrders.length} orders` : "Select a date above"}</p>
           </div>
         </div>
@@ -298,7 +359,7 @@ THANK YOU
                         {order.paymentMethod || "CASH"}
                       </span>
                     </td>
-                    <td className="p-3 sm:p-4 font-bold text-right text-amber-300 text-sm sm:text-base">₹{order.finalTotal}</td>
+                    <td className="p-3 sm:p-4 font-bold text-right text-amber-300 text-sm sm:text-base">₹{formatCurrency(order.finalTotal)}</td>
                     <td className="p-3 sm:p-4 text-center">
                       <button
                         onClick={() => printBill(order)}

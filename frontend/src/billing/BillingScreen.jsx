@@ -15,6 +15,10 @@ const BillingScreen = () => {
   const [alert, setAlert] = useState({ show: false, message: "" });
   const [paymentMethod, setPaymentMethod] = useState("Cash");
   const [cashGiven, setCashGiven] = useState("");
+  const [showMobileField, setShowMobileField] = useState(() => {
+    const saved = localStorage.getItem("showMobileFieldInBilling");
+    return saved !== null ? JSON.parse(saved) : true;
+  });
   const shopName = import.meta.env.VITE_SHOP_NAME || "Shop";
 
   useEffect(() => {
@@ -29,10 +33,19 @@ const BillingScreen = () => {
       fetchProductsData(true);
     }
 
+    const handleStorageChange = () => {
+      const saved = localStorage.getItem("showMobileFieldInBilling");
+      if (saved !== null) {
+        setShowMobileField(JSON.parse(saved));
+      }
+    };
+
     socket.on("productUpdated", () => fetchProductsData(false));
+    window.addEventListener("storage", handleStorageChange);
 
     return () => {
       socket.off("productUpdated");
+      window.removeEventListener("storage", handleStorageChange);
     };
   }, []);
 
@@ -206,22 +219,24 @@ const BillingScreen = () => {
         {/* <p className="text-center uppercase tracking-[0.4em] text-slate-300/70 mb-10 text-sm sm:text-base">Premium billing experience</p> */}
 
         {/* MOBILE SECTION */}
-        <div className="bg-slate-950/90 p-4 sm:p-6 rounded-[2rem] mb-6 border border-slate-700/70 shadow-xl">
-          <label className="block text-lg sm:text-xl font-semibold text-slate-100 mb-3 uppercase tracking-[0.14em]">Customer Mobile</label>
-          <input
-            type="tel"
-            value={mobile}
-            onChange={handleMobileChange}
-            placeholder="Enter Mobile Number"
-            className="premium-input w-full px-5 py-4 text-[clamp(1rem,2.6vw,1.5rem)] font-semibold placeholder:text-slate-500"
-            maxLength={10}
-          />
-          {walletPoints > 0 && (
-            <div className="mt-4 bg-slate-900/80 p-4 rounded-3xl border border-slate-600/70 shadow-inner">
-              <span className="text-base sm:text-xl font-semibold text-amber-200">Reward Wallet: <span className="text-2xl sm:text-3xl font-black text-white">{walletPoints}</span> Points</span>
-            </div>
-          )}
-        </div>
+        {showMobileField && (
+          <div className="bg-slate-950/90 p-4 sm:p-6 rounded-[2rem] mb-6 border border-slate-700/70 shadow-xl">
+            <label className="block text-lg sm:text-xl font-semibold text-slate-100 mb-3 uppercase tracking-[0.14em]">Customer Mobile</label>
+            <input
+              type="tel"
+              value={mobile}
+              onChange={handleMobileChange}
+              placeholder="Enter Mobile Number"
+              className="premium-input w-full px-5 py-4 text-[clamp(1rem,2.6vw,1.5rem)] font-semibold placeholder:text-slate-500"
+              maxLength={10}
+            />
+            {walletPoints > 0 && (
+              <div className="mt-4 bg-slate-900/80 p-4 rounded-3xl border border-slate-600/70 shadow-inner">
+                <span className="text-base sm:text-xl font-semibold text-amber-200">Reward Wallet: <span className="text-2xl sm:text-3xl font-black text-white">{walletPoints}</span> Points</span>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* SEARCH SECTION */}
         <div className="relative mb-8">

@@ -7,7 +7,9 @@ import socket from "../utils/socket";
 const Orders = () => {
   const [orders, setOrders] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedDate, setSelectedDate] = useState("");
+
+  const [fromDate, setFromDate] = useState("");
+  const [toDate, setToDate] = useState("");
   const [confirm, setConfirm] = useState({ show: false, id: null });
   const shopName = import.meta.env.VITE_SHOP_NAME || "Shop";
 
@@ -36,7 +38,7 @@ const Orders = () => {
   const printBill = (order) => {
     const receipt = `
 ================================
-          FRUTERIA
+         ${shopName.toUpperCase()}
 ================================
 Bill ID : ${order.billId || order._id}
 Date    : ${new Date(order.createdAt).toLocaleDateString()}
@@ -65,27 +67,62 @@ THANK YOU
     }
   };
 
-  const selectedDateOrders = selectedDate
-    ? orders.filter(order => getBusinessDate(order.createdAt) === selectedDate)
-    : orders;
+  const selectedRangeOrders = (() => {
+    const from = fromDate || "";
+    const to = toDate || "";
 
-  const selectedDateSales = selectedDateOrders.reduce((a, b) => a + b.finalTotal, 0);
+    // Allow single day (from only) or range (both dates)
+    if (!from && !to) {
+      return orders;
+    }
 
-  const filteredOrders = selectedDateOrders.filter(order =>
-    (order.mobile && order.mobile.includes(searchTerm)) || 
-    (order.billId && order.billId.toLowerCase().includes(searchTerm.toLowerCase()))
+    let fromMs, toMs;
+
+    if (from && !to) {
+      // Single day - from date only
+      fromMs = new Date(from + "T00:00:00").getTime();
+      toMs = new Date(from + "T23:59:59").getTime();
+    } else if (from && to) {
+      // Range - both dates
+      fromMs = new Date(from + "T00:00:00").getTime();
+      toMs = new Date(to + "T23:59:59").getTime();
+    } else {
+      // Only to date (treat as single day)
+      fromMs = new Date(to + "T00:00:00").getTime();
+      toMs = new Date(to + "T23:59:59").getTime();
+    }
+
+    return orders.filter((order) => {
+      const d = new Date(order.createdAt).getTime();
+      return d >= fromMs && d <= toMs;
+    });
+  })();
+
+  const selectedDateSales = selectedRangeOrders.reduce((a, b) => a + b.finalTotal, 0);
+
+  const filteredOrders = selectedRangeOrders.filter(
+    (order) =>
+      (order.mobile && order.mobile.includes(searchTerm)) ||
+      (order.billId &&
+        order.billId.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
+
   const printSalesReport = () => {
-    const reportOrders = selectedDateOrders;
-    const reportRows = reportOrders.map((order) => 
+    const reportOrders = selectedRangeOrders;
+    const reportRows = reportOrders.map((order) =>
       order.items.map((item, i) => {
         const isFirst = i === 0;
         const isLast = i === order.items.length - 1;
+        const customerName = order.mobile && order.mobile.toLowerCase() !== "guest" ? order.mobile : "Guest";
+        const orderDate = new Date(order.createdAt);
+        const day = String(orderDate.getDate()).padStart(2, '0');
+        const month = orderDate.toLocaleString('en-GB', { month: 'short' }).toUpperCase();
+        const year = orderDate.getFullYear();
+        const billInfo = isFirst ? `<strong>${order.billId || order._id}</strong><br>${day}-${month}-${year}<br>${customerName}` : "";
         return `
           <tr class="${isLast ? 'bill-row-end' : ''}">
-            <td>${isFirst ? (order.billId || order._id) : ""}</td>
-            <td>${isFirst ? (order.mobile && order.mobile.toLowerCase() !== "guest" ? order.mobile : "Guest") : ""}</td>
+            <td>${billInfo}</td>
             <td>${isFirst ? (order.paymentMethod || "Cash") : ""}</td>
             <td>${item.name}</td>
             <td class="text-right">${item.qty}</td>
@@ -95,6 +132,9 @@ THANK YOU
           </tr>`;
       }).join("")
     ).join("");
+
+    // Build date range label
+    const dateRangeLabel = fromDate ? (toDate ? `${fromDate} - ${toDate}` : fromDate) : (toDate ? toDate : "All Dates");
 
     const html = `
       <html>
@@ -116,7 +156,7 @@ THANK YOU
             .report-table tr.bill-row-end td { border-bottom: 1px solid #ccc; }
             .report-table .text-right { text-align: right; }
             .report-table .bold { font-weight: bold; }
-            .report-table td:first-child, .report-table td:nth-child(2), .report-table td:nth-child(3) { vertical-align: top; }
+            .report-table td:first-child { vertical-align: top; }
             .footer { margin-top: 18px; font-size: 11px; }
             .note { margin-top: 10px; color: #555; }
           </style>
@@ -125,18 +165,17 @@ THANK YOU
           <div class="report-container">
             <div class="header">
               <h1>${shopName.toUpperCase()}</h1>
-              <p>Daily Sales Report</p>
+              <p>Sales Report</p>
             </div>
             <table class="summary">
-              <tr><td class="label">Report Date</td><td>${selectedDate}</td></tr>
+              <tr><td class="label">Date</td><td>${dateRangeLabel}</td></tr>
               <tr><td class="label">Total Orders</td><td>${reportOrders.length}</td></tr>
               <tr><td class="label">Total Sales</td><td>₹${selectedDateSales.toFixed(2)}</td></tr>
             </table>
             <table class="report-table">
               <thead>
                 <tr>
-                  <th>Bill</th>
-                  <th>Customer</th>
+                  <th>Bill | Date | Customer</th>
                   <th>Method</th>
                   <th>Item</th>
                   <th class="text-right">Qty</th>
@@ -148,7 +187,7 @@ THANK YOU
               <tbody>
                 ${reportRows}
                 <tr class="bill-row-end">
-                  <td colspan="7" class="text-right bold">Grand Total</td>
+                  <td colspan="6" class="text-right bold">Grand Total</td>
                   <td class="text-right bold">₹${selectedDateSales.toFixed(2)}</td>
                 </tr>
               </tbody>
@@ -188,53 +227,71 @@ THANK YOU
             </div>
 
             <div>
-              <label className="block text-sm sm:text-base font-semibold text-slate-100 mb-2 uppercase tracking-[0.14em]">Filter by Date</label>
+              <label className="block text-sm sm:text-base font-semibold text-slate-100 mb-2 uppercase tracking-[0.14em]">Filter by Date Range (From - To)</label>
               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4">
-                <input
-                  type="date"
-                  className="premium-input flex-1 px-4 py-3 text-[clamp(0.9rem,2.2vw,1.2rem)] font-semibold"
-                  value={selectedDate}
-                  onChange={(e) => setSelectedDate(e.target.value)}
-                />
-                {selectedDate && (
-                  <>
-                    <button
-                      onClick={() => setSelectedDate("")}
-                      className="premium-button-secondary bg-slate-900/95 text-slate-100 px-4 py-3 rounded-2xl font-bold border border-slate-600 shadow-lg hover:border-slate-400 transition-all text-sm sm:text-base"
-                    >
-                      Clear
-                    </button>
-                    <button
-                      onClick={printSalesReport}
-                      className="premium-button bg-gradient-to-r from-cyan-400 to-blue-500 text-slate-950 px-4 py-3 rounded-2xl font-bold shadow-lg hover:from-cyan-300 hover:to-blue-400 transition-all text-sm sm:text-base whitespace-nowrap"
-                    >
-                      Print Report
-                    </button>
-                  </>
-                )}
+                <div className="flex-1 w-full">
+                  <span className="text-xs text-slate-400 mb-1 block">From Date</span>
+                  <input
+                    type="date"
+                    className="premium-input w-full px-4 py-3 text-[clamp(0.9rem,2.2vw,1.2rem)] font-semibold"
+                    value={fromDate}
+                    onChange={(e) => setFromDate(e.target.value)}
+                  />
+                </div>
+                <div className="flex-1 w-full">
+                  <span className="text-xs text-slate-400 mb-1 block">To Date</span>
+                  <input
+                    type="date"
+                    className="premium-input w-full px-4 py-3 text-[clamp(0.9rem,2.2vw,1.2rem)] font-semibold"
+                    value={toDate}
+                    onChange={(e) => setToDate(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              <div className="flex gap-3 mt-4">
+                <button
+                  onClick={() => {
+                    setFromDate("");
+                    setToDate("");
+                  }}
+                  className="premium-button-secondary bg-slate-900/95 text-slate-100 px-5 py-3 rounded-2xl font-bold border border-slate-600 shadow-lg hover:border-slate-400 transition-all text-sm sm:text-base whitespace-nowrap flex-1"
+                >
+                  CLEAR
+                </button>
+                <button
+                  onClick={printSalesReport}
+                  disabled={!fromDate}
+                  className={`premium-button bg-gradient-to-r from-cyan-400 to-blue-500 text-slate-950 px-5 py-3 rounded-2xl font-bold shadow-lg transition-all text-sm sm:text-base whitespace-nowrap flex-1 ${!fromDate ? 'opacity-40 cursor-not-allowed' : 'hover:from-cyan-300 hover:to-blue-400'}`}
+                >
+                  PRINT REPORT 🖨️
+                </button>
               </div>
             </div>
           </div>
 
-          {selectedDate && (
-            <div className="mt-4 pt-4 border-t border-slate-600 grid grid-cols-2 sm:grid-cols-3 gap-3">
+          {fromDate && (
+            <div className="mt-4 pt-4 border-t border-slate-600 grid grid-cols-3 gap-3">
               <div className="bg-slate-900/50 p-3 rounded-lg">
-                <p className="text-xs uppercase text-slate-400 font-semibold">Date</p>
-                <p className="text-lg font-bold text-amber-300">{selectedDate}</p>
+                <p className="text-xs uppercase text-slate-400 font-semibold">Date Range</p>
+                <p className="text-lg font-bold text-amber-300">
+                  {fromDate}{toDate ? ` - ${toDate}` : ""}
+                </p>
               </div>
               <div className="bg-slate-900/50 p-3 rounded-lg">
                 <p className="text-xs uppercase text-slate-400 font-semibold">Total Orders</p>
-                <p className="text-lg font-bold text-emerald-300">{selectedDateOrders.length}</p>
+                <p className="text-lg font-bold text-emerald-300">{filteredOrders.length}</p>
               </div>
               <div className="bg-slate-900/50 p-3 rounded-lg">
-                <p className="text-xs uppercase text-slate-400 font-semibold">Day Sales</p>
-                <p className="text-lg font-bold text-violet-300">₹{selectedDateSales}</p>
+                <p className="text-xs uppercase text-slate-400 font-semibold">Total Sales</p>
+                <p className="text-lg font-bold text-violet-300">₹{selectedDateSales.toFixed(2)}</p>
               </div>
             </div>
           )}
         </div>
 
         <div className="premium-card rounded-2xl shadow-2xl overflow-hidden border border-slate-700/70">
+
           <table className="w-full text-left">
             <thead className="bg-slate-900 text-slate-100">
               <tr>
@@ -277,9 +334,9 @@ THANK YOU
                     <div className="flex flex-col sm:flex-row justify-center gap-2 sm:gap-3">
                       <button
                         onClick={() => printBill(order)}
-                        className="premium-button bg-gradient-to-r from-cyan-400 to-blue-500 text-slate-950 px-4 py-2 rounded-xl font-bold hover:from-cyan-300 hover:to-blue-400 transition-all text-sm sm:text-base"
+                        className="premium-button bg-gradient-to-r from-cyan-400 to-blue-500 text-slate-950 px-3 py-2 rounded-xl font-bold hover:from-cyan-300 hover:to-blue-400 transition-all text-xs sm:text-sm"
                       >
-                        PRINT 🖨️
+                        🖨️ Print
                       </button>
                       <button
                         onClick={() => setConfirm({ show: true, id: order._id })}
@@ -295,6 +352,7 @@ THANK YOU
           </table>
         </div>
       </div>
+
 
       {/* CUSTOM CONFIRM */}
       {confirm.show && (

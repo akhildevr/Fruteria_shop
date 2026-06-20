@@ -51,9 +51,12 @@ const ProductAnalysis = () => {
     const monthly = {};
     let totalQty = 0;
     let totalRevenue = 0;
+    let totalCashRevenue = 0;
+    let totalUpiRevenue = 0;
 
     orders.forEach((order) => {
       const orderMonth = monthKey(order.createdAt);
+      const isUpi = order.paymentMethod === "UPI";
 
       if (!monthly[orderMonth]) {
         monthly[orderMonth] = {};
@@ -67,6 +70,13 @@ const ProductAnalysis = () => {
 
         totalQty += qty;
         totalRevenue += revenue;
+
+        // Split revenue by payment method
+        if (isUpi) {
+          totalUpiRevenue += revenue;
+        } else {
+          totalCashRevenue += revenue;
+        }
 
         if (!products[productId]) {
           products[productId] = { productId, name, qty: 0, revenue: 0 };
@@ -89,7 +99,7 @@ const ProductAnalysis = () => {
       productStats: overall,
       monthOptions: monthKeys,
       productStatsByMonth: monthly,
-      overallTotals: { totalQty, totalRevenue, totalProducts: overall.length }
+      overallTotals: { totalQty, totalRevenue, totalCashRevenue, totalUpiRevenue, totalProducts: overall.length }
     };
   }, [orders]);
 
@@ -166,6 +176,10 @@ const ProductAnalysis = () => {
             <div className="rounded-3xl bg-white p-5 border border-slate-200 shadow-sm">
               <p className="text-xs uppercase tracking-[0.25em] text-slate-500 mb-3">Total Revenue</p>
               <p className="text-3xl font-black text-emerald-600">₹{overallTotals.totalRevenue.toFixed(2)}</p>
+              <div className="flex gap-3 mt-2">
+                <span className="text-sm font-bold text-emerald-600">CASH: ₹{overallTotals.totalCashRevenue.toFixed(2)}</span>
+                <span className="text-sm font-bold text-blue-600">UPI: ₹{overallTotals.totalUpiRevenue.toFixed(2)}</span>
+              </div>
             </div>
           </div>
         </div>
