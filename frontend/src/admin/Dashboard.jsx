@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
-import { fetchOrders, fetchTodaySales, fetchPurchases } from "../utils/api";
+import { fetchOrders, fetchTodaySales, fetchPurchases, getMobileFieldSetting, setMobileFieldSetting } from "../utils/api";
 import { getBusinessDate } from "../utils/dateUtils";
 import AdminNavbar from "./AdminNavbar";
 import socket from "../utils/socket";
+
 
 const Dashboard = () => {
   const [orders, setOrders] = useState([]);
@@ -11,10 +12,9 @@ const Dashboard = () => {
   const [selectedDate, setSelectedDate] = useState("");
   const [loading, setLoading] = useState(true);
   const [purchases, setPurchases] = useState([]);
-  const [showMobileField, setShowMobileField] = useState(() => {
-    const saved = localStorage.getItem("showMobileFieldInBilling");
-    return saved !== null ? JSON.parse(saved) : true;
-  });
+  const [showMobileField, setShowMobileField] = useState(true);
+  const [settingsLoading, setSettingsLoading] = useState(false);
+
   const shopName = import.meta.env.VITE_SHOP_NAME || "Shop";
   const todayStr = new Date().toISOString().split("T")[0];
 
@@ -26,11 +26,21 @@ const Dashboard = () => {
     });
   };
 
-  const toggleMobileField = () => {
+  const toggleMobileField = async () => {
     const newValue = !showMobileField;
-    setShowMobileField(newValue);
-    localStorage.setItem("showMobileFieldInBilling", JSON.stringify(newValue));
+    setSettingsLoading(true);
+    try {
+      setShowMobileField(newValue);
+      await setMobileFieldSetting(newValue);
+    } catch (error) {
+      console.error("Error updating mobile field setting", error);
+      // revert UI if update failed
+      setShowMobileField((prev) => !prev);
+    } finally {
+      setSettingsLoading(false);
+    }
   };
+
 
   useEffect(() => {
     const loadInitialData = async () => {
@@ -38,11 +48,22 @@ const Dashboard = () => {
       await Promise.allSettled([
         fetchOrdersData(),
         fetchTodaySalesData(),
-        fetchPurchasesData()
+        fetchPurchasesData(),
+        (async () => {
+          try {
+            const res = await getMobileFieldSetting();
+            if (typeof res.data?.showMobileField === "boolean") {
+              setShowMobileField(res.data.showMobileField);
+            }
+          } catch (e) {
+            console.error("Error loading mobile field setting", e);
+          }
+        })()
       ]);
       setLoading(false);
     };
     loadInitialData();
+
 
     socket.on("orderUpdated", () => {
       fetchOrdersData();
@@ -252,12 +273,16 @@ THANK YOU
             <label className="text-sm sm:text-base font-semibold text-slate-100 uppercase tracking-[0.14em]">Mobile Field in Billing</label>
             <button
               onClick={toggleMobileField}
+              disabled={settingsLoading}
               className={`relative inline-flex items-center h-10 w-16 rounded-full transition-all duration-300 ${
-                showMobileField
-                  ? "bg-emerald-500 shadow-lg shadow-emerald-500/50"
-                  : "bg-slate-700 shadow-lg shadow-slate-700/50"
+                settingsLoading
+                  ? "bg-slate-600/60 cursor-not-allowed"
+                  : showMobileField
+                    ? "bg-emerald-500 shadow-lg shadow-emerald-500/50"
+                    : "bg-slate-700 shadow-lg shadow-slate-700/50"
               }`}
             >
+
               <span
                 className={`inline-block h-8 w-8 transform rounded-full bg-white transition-transform duration-300 ${
                   showMobileField ? "translate-x-1" : "-translate-x-1"

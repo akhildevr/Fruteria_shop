@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { fetchProducts, fetchCustomer, createOrder } from "../utils/api";
 import socket from "../utils/socket";
+import { getMobileFieldSetting } from "../utils/api";
 
 const BillingScreen = () => {
+
   const [products, setProducts] = useState([]);
   const [search, setSearch] = useState("");
   const [cart, setCart] = useState([]);
@@ -15,10 +17,9 @@ const BillingScreen = () => {
   const [alert, setAlert] = useState({ show: false, message: "" });
   const [paymentMethod, setPaymentMethod] = useState("Cash");
   const [cashGiven, setCashGiven] = useState("");
-  const [showMobileField, setShowMobileField] = useState(() => {
-    const saved = localStorage.getItem("showMobileFieldInBilling");
-    return saved !== null ? JSON.parse(saved) : true;
-  });
+  const [showMobileField, setShowMobileField] = useState(true);
+  const [settingsLoading, setSettingsLoading] = useState(false);
+
   const shopName = import.meta.env.VITE_SHOP_NAME || "Shop";
 
   useEffect(() => {
@@ -33,21 +34,34 @@ const BillingScreen = () => {
       fetchProductsData(true);
     }
 
-    const handleStorageChange = () => {
-      const saved = localStorage.getItem("showMobileFieldInBilling");
-      if (saved !== null) {
-        setShowMobileField(JSON.parse(saved));
+    const loadSetting = async () => {
+      try {
+        const res = await getMobileFieldSetting();
+        if (typeof res.data?.showMobileField === "boolean") {
+          setShowMobileField(res.data.showMobileField);
+        }
+      } catch (e) {
+        console.error("Error loading mobile field setting", e);
       }
     };
 
     socket.on("productUpdated", () => fetchProductsData(false));
-    window.addEventListener("storage", handleStorageChange);
+    // Update instantly when admin toggles the mobile-field setting
+    socket.on("settingsUpdated", (payload) => {
+      if (payload?.key === "showMobileFieldInBilling") {
+        loadSetting();
+      }
+    });
+
+    loadSetting();
 
     return () => {
       socket.off("productUpdated");
-      window.removeEventListener("storage", handleStorageChange);
+      socket.off("settingsUpdated");
     };
   }, []);
+
+
 
   const fetchProductsData = async (showLoading = true) => {
     try {
