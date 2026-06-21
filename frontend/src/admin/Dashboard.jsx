@@ -114,7 +114,16 @@ THANK YOU
     ? orders.filter(order => getBusinessDate(order.createdAt) === selectedDate)
     : orders;
 
+  const selectedDateCashSales = selectedDateOrders
+    .filter(o => !o.paymentMethod || o.paymentMethod === "Cash")
+    .reduce((a, b) => a + b.finalTotal, 0);
+
+  const selectedDateUpiSales = selectedDateOrders
+    .filter(o => o.paymentMethod === "UPI")
+    .reduce((a, b) => a + b.finalTotal, 0);
+
   const selectedDateSales = selectedDateOrders.reduce((a, b) => a + b.finalTotal, 0);
+
 
   const totalPurchaseCost = purchases.reduce((a, b) => a + (Number(b.price) || 0), 0);
 
@@ -188,7 +197,10 @@ THANK YOU
               <tr><td class="label">Report Date</td><td>${selectedDate}</td></tr>
               <tr><td class="label">Total Orders</td><td>${reportOrders.length}</td></tr>
               <tr><td class="label">Total Sales</td><td>₹${selectedDateSales.toFixed(2)}</td></tr>
+              <tr><td class="label">Cash Total</td><td>₹${selectedDateCashSales.toFixed(2)}</td></tr>
+              <tr><td class="label">UPI Total</td><td>₹${selectedDateUpiSales.toFixed(2)}</td></tr>
             </table>
+
             <table class="report-table">
               <thead>
                 <tr>
@@ -290,8 +302,15 @@ THANK YOU
           <div className="bg-slate-950/90 p-4 rounded-[2rem] border border-slate-700/70 shadow-xl text-center flex flex-col justify-center min-h-[120px]">
             <h2 className="text-[9px] sm:text-[11px] font-semibold text-slate-100 mb-2 uppercase tracking-[0.07em]">Day Sales</h2>
             <p className="text-xl sm:text-2xl font-black text-violet-300">{selectedDate ? `₹${formatCurrency(selectedDateSales)}` : "—"}</p>
+            {selectedDate && (
+              <div className="flex justify-center gap-3 mt-2">
+                <span className="text-xs sm:text-sm font-bold text-emerald-400">CASH: ₹{formatCurrency(selectedDateCashSales)}</span>
+                <span className="text-xs sm:text-sm font-bold text-blue-400">UPI: ₹{formatCurrency(selectedDateUpiSales)}</span>
+              </div>
+            )}
             <p className="text-sm sm:text-base mt-2 text-slate-400">{selectedDate ? `${selectedDateOrders.length} orders` : "Select a date above"}</p>
           </div>
+
         </div>
 
         <div className="premium-card p-4 sm:p-6 shadow-2xl border border-slate-700/70">
