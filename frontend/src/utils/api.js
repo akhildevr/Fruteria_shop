@@ -24,8 +24,16 @@ export const fetchPurchases = () => API.get("/purchases");
 export const addPurchase = (data) => API.post("/purchases", data);
 export const deletePurchase = (id) => API.delete(`/purchases/${id}`);
 
+// Credit/Purchase Entries
+export const fetchCreditPurchases = () => API.get("/credit-purchases");
+export const addCreditPurchase = (data) => API.post("/credit-purchases", data);
+export const updateCreditPurchase = (id, data) => API.put(`/credit-purchases/${id}`, data);
+export const deleteCreditPurchase = (id) => API.delete(`/credit-purchases/${id}`);
+
+
 // Customers
 export const fetchCustomer = (mobile) => API.get(`/customers/${mobile}`);
+
 
 // Staff Expenses
 export const fetchStaffExpenses = () => API.get("/staffexpenses");

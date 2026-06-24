@@ -14,8 +14,10 @@ import Customers from "./admin/Customers";
 import StaffExpenses from "./admin/StaffExpenses";
 import Categories from "./admin/Categories";
 import ShopExpenses from "./admin/ShopExpenses";
+import CreditPurchase from "./admin/CreditPurchase";
 
 function App() {
+
 
   return (
 
@@ -71,6 +73,11 @@ function App() {
         <Route
           path="/admin/categories"
           element={<Categories />}
+        />
+
+        <Route
+          path="/admin/credit-purchase"
+          element={<CreditPurchase />}
         />
 
       </Routes>

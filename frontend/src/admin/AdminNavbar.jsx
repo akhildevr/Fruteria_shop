@@ -14,6 +14,7 @@ const AdminNavbar = () => {
     { name: "CATEGORIES", path: "/admin/categories" },
     { name: "STAFF", path: "/admin/staff" },
     { name: "SHOP EXPENSES", path: "/admin/shop-expenses" },
+    { name: "CREDIT / PURCHASE", path: "/admin/credit-purchase" },
     { name: "BILLING", path: "/" },
   ];
 
