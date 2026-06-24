@@ -88,6 +88,8 @@ const Categories = () => {
                 <option value="" disabled>SELECT PAGE</option>
                 <option value="Products">PRODUCTS</option>
                 <option value="Staff">STAFF</option>
+                <option value="creditpurchase">CREDIT PURCHASE</option>
+
               </select>
             </div>
             <div className="flex items-end">
@@ -98,7 +100,7 @@ const Categories = () => {
 
         <div className="premium-card p-6 border border-slate-700/70 shadow-2xl overflow-x-auto">
           <div className="mb-4 flex flex-wrap gap-3">
-            {['All', 'Products', 'Staff'].map((item) => (
+            {['All', 'Products', 'Staff', 'creditpurchase'].map((item) => (
               <button
                 key={item}
                 onClick={() => setViewPage(item)}

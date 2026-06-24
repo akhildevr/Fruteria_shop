@@ -9,7 +9,8 @@ const categorySchema = new mongoose.Schema({
   },
   page: {
     type: String,
-    enum: ["Products", "Staff"],
+    enum: ["Products", "Staff", "creditpurchase"],
+
     required: true,
     default: "Products"
   }

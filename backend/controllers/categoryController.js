@@ -21,8 +21,18 @@ exports.createCategory = async (req, res) => {
     }
 
     const normalizedPage = typeof page === "string" ? page.trim() : "";
-    const validPage = normalizedPage.toLowerCase() === "staff" ? "Staff" : "Products";
-    const categoryPage = ["Products", "Staff"].includes(validPage) ? validPage : "Products";
+
+    // Supported pages:
+    // - Products
+    // - Staff
+    // - creditpurchase
+    // (client may send any casing)
+    const lower = normalizedPage.toLowerCase();
+    let categoryPage;
+    if (lower === "staff") categoryPage = "Staff";
+    else if (lower === "creditpurchase") categoryPage = "creditpurchase";
+    else categoryPage = "Products";
+
     const existingCategory = await Category.findOne({ name: name.trim(), page: categoryPage });
     if (existingCategory) {
       return res.status(400).json({ error: "Category already exists" });

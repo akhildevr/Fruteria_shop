@@ -1,18 +1,16 @@
 import { useEffect, useMemo, useState } from "react";
 import AdminNavbar from "./AdminNavbar";
 import socket from "../utils/socket";
-import {
-  fetchCreditPurchases,
-  addCreditPurchase,
-  updateCreditPurchase,
-  deleteCreditPurchase,
-} from "../utils/api";
+import { fetchCategories, fetchCreditPurchases, addCreditPurchase, updateCreditPurchase, deleteCreditPurchase } from "../utils/api";
 
 
 const CreditPurchase = () => {
 
+
   const [entries, setEntries] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  const [creditPurchaseNames, setCreditPurchaseNames] = useState([]);
 
   const [form, setForm] = useState({
     name: "",
@@ -22,6 +20,7 @@ const CreditPurchase = () => {
     date: new Date().toISOString().split("T")[0],
     description: "",
   });
+
 
   const [searchTerm, setSearchTerm] = useState("");
   const [fromDate, setFromDate] = useState("");
@@ -43,15 +42,36 @@ const CreditPurchase = () => {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const res = await fetchCreditPurchases();
-      const data = Array.isArray(res.data) ? res.data : [];
+      const [creditRes, categoryRes] = await Promise.all([
+        fetchCreditPurchases(),
+        fetchCategories(),
+      ]);
+
+      const data = Array.isArray(creditRes.data) ? creditRes.data : [];
       setEntries(data);
+
+      const cats = Array.isArray(categoryRes.data) ? categoryRes.data : [];
+      const names = cats
+        .filter((c) => (c?.page || "").toString().toLowerCase() === "creditpurchase")
+        .map((c) => (c?.name || "").trim())
+        .filter(Boolean);
+
+      const uniqueNames = Array.from(new Set(names));
+      setCreditPurchaseNames(uniqueNames);
+
+      // Keep the dropdown on the placeholder by default.
+      // If the current value is still valid, preserve it; otherwise reset to "".
+      setForm((prev) => {
+        if (prev.name && uniqueNames.includes(prev.name)) return prev;
+        return { ...prev, name: "" };
+      });
     } catch (e) {
       console.error("Fetch credit/purchase failed:", e);
     } finally {
       setLoading(false);
     }
   };
+
 
   useEffect(() => {
     // Avoid calling setState synchronously during effect render.
@@ -210,9 +230,11 @@ const CreditPurchase = () => {
     );
   }
 
-  const storedNames = Array.from(
-    new Set(entries.map((e) => (e?.name || "").trim()).filter(Boolean))
-  );
+  const storedNames = creditPurchaseNames;
+
+  const selectedNameOptions = storedNames;
+
+
 
   return (
     <div className="min-h-screen text-slate-100 px-3 py-4" style={{ background: "radial-gradient(circle at top, rgba(56,189,248,0.15), transparent 30%), linear-gradient(180deg, #020617 0%, #060d19 50%, #020616 100%)" }}>
@@ -234,11 +256,15 @@ const CreditPurchase = () => {
                 <option value="" disabled>
                   Select
                 </option>
-                {storedNames.map((n) => (
+                {selectedNameOptions.length === 0 ? (
+                      <option value="" disabled>No names available</option>
+                    ) :
+                selectedNameOptions.map((n) => (
                   <option key={n} value={n}>
                     {n}
                   </option>
                 ))}
+
               </select>
             </div>
 
