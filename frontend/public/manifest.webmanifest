@@ -1,0 +1,17 @@
+{
+  "name": "Fruteria Shop",
+  "short_name": "Fruteria",
+  "description": "Fruit shop billing and management app",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#fff7ed",
+  "theme_color": "#f59e0b",
+  "icons": [
+    {
+      "src": "/icons/fruteria-icon.png",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
