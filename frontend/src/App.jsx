@@ -15,6 +15,7 @@ import StaffExpenses from "./admin/StaffExpenses";
 import Categories from "./admin/Categories";
 import ShopExpenses from "./admin/ShopExpenses";
 import CreditPurchase from "./admin/CreditPurchase";
+import Accounts from "./admin/Accounts";
 
 function App() {
 
@@ -78,6 +79,11 @@ function App() {
         <Route
           path="/admin/credit-purchase"
           element={<CreditPurchase />}
+        />
+
+        <Route
+          path="/admin/accounts"
+          element={<Accounts />}
         />
 
       </Routes>
