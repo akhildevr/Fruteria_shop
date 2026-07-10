@@ -22,9 +22,9 @@
       "purpose": "any"
     },
     {
-      "src": "/icons/app-icon.svg",
+      "src": "/icons/fruteria-icon.png",
       "sizes": "any",
-      "type": "image/svg+xml",
+      "type": "image/png",
       "purpose": "any"
     }
   ]
