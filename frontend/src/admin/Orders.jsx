@@ -423,77 +423,79 @@ THANK YOU
 
 
       {editingOrder && (
-        <div className="fixed inset-0 flex items-center justify-center z-[100] bg-black/70 backdrop-blur-sm p-4">
-          <div className="bg-slate-900 border border-slate-700 rounded-3xl max-w-3xl w-full p-5 sm:p-6 shadow-2xl text-slate-100">
+        <div className="fixed inset-0 z-[100] flex items-start justify-center overflow-y-auto bg-black/70 p-3 sm:p-4 backdrop-blur-sm">
+          <div className="mt-2 w-full max-w-3xl rounded-3xl border border-slate-700 bg-slate-900 p-4 text-slate-100 shadow-2xl sm:p-6">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-2xl font-black text-amber-300">Edit Order</h2>
+              <h2 className="text-xl sm:text-2xl font-black text-amber-300">Edit Order</h2>
               <button onClick={() => setEditingOrder(null)} className="text-slate-400 hover:text-white text-xl font-bold">✕</button>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-semibold text-slate-300 mb-2">Date</label>
-                <input
-                  type="date"
-                  value={editDate}
-                  onChange={(e) => setEditDate(e.target.value)}
-                  className="premium-input w-full px-4 py-3"
-                />
+            <div className="max-h-[72vh] overflow-y-auto pr-1">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-semibold text-slate-300 mb-2">Date</label>
+                  <input
+                    type="date"
+                    value={editDate}
+                    onChange={(e) => setEditDate(e.target.value)}
+                    className="premium-input w-full px-4 py-3"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-slate-300 mb-2">Payment Method</label>
+                  <select
+                    value={editMethod}
+                    onChange={(e) => setEditMethod(e.target.value)}
+                    className="premium-input w-full px-4 py-3"
+                  >
+                    <option value="Cash">Cash</option>
+                    <option value="UPI">UPI</option>
+                  </select>
+                </div>
               </div>
 
-              <div>
-                <label className="block text-sm font-semibold text-slate-300 mb-2">Payment Method</label>
-                <select
-                  value={editMethod}
-                  onChange={(e) => setEditMethod(e.target.value)}
-                  className="premium-input w-full px-4 py-3"
-                >
-                  <option value="Cash">Cash</option>
-                  <option value="UPI">UPI</option>
-                </select>
+              <div className="mt-5">
+                <div className="flex items-center justify-between mb-3">
+                  <label className="text-sm font-semibold text-slate-300">Items</label>
+                  <button onClick={addEditItem} className="text-sm font-bold text-cyan-400 hover:text-cyan-300">+ Add Item</button>
+                </div>
+
+                <div className="space-y-3">
+                  {editItems.map((item, index) => (
+                    <div key={index} className="grid grid-cols-1 gap-2 rounded-2xl border border-slate-700 bg-slate-950/70 p-3 md:grid-cols-[1.6fr_0.7fr_0.8fr_auto] md:items-center">
+                      <input
+                        type="text"
+                        placeholder="Item name"
+                        value={item.name}
+                        onChange={(e) => updateEditItem(index, "name", e.target.value)}
+                        className="premium-input px-3 py-2"
+                      />
+                      <input
+                        type="number"
+                        min="0"
+                        placeholder="Qty"
+                        value={item.qty}
+                        onChange={(e) => updateEditItem(index, "qty", e.target.value)}
+                        className="premium-input px-3 py-2"
+                      />
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        placeholder="Price"
+                        value={item.price}
+                        onChange={(e) => updateEditItem(index, "price", e.target.value)}
+                        className="premium-input px-3 py-2"
+                      />
+                      <button onClick={() => removeEditItem(index)} className="text-rose-400 hover:text-rose-300 text-lg font-bold md:justify-self-end">🗑</button>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
 
-            <div className="mt-5">
-              <div className="flex items-center justify-between mb-3">
-                <label className="text-sm font-semibold text-slate-300">Items</label>
-                <button onClick={addEditItem} className="text-sm font-bold text-cyan-400 hover:text-cyan-300">+ Add Item</button>
-              </div>
-
-              <div className="space-y-3">
-                {editItems.map((item, index) => (
-                  <div key={index} className="grid grid-cols-1 md:grid-cols-[1.6fr_0.7fr_0.8fr_auto] gap-2 items-center bg-slate-950/70 p-3 rounded-2xl border border-slate-700">
-                    <input
-                      type="text"
-                      placeholder="Item name"
-                      value={item.name}
-                      onChange={(e) => updateEditItem(index, "name", e.target.value)}
-                      className="premium-input px-3 py-2"
-                    />
-                    <input
-                      type="number"
-                      min="0"
-                      placeholder="Qty"
-                      value={item.qty}
-                      onChange={(e) => updateEditItem(index, "qty", e.target.value)}
-                      className="premium-input px-3 py-2"
-                    />
-                    <input
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      placeholder="Price"
-                      value={item.price}
-                      onChange={(e) => updateEditItem(index, "price", e.target.value)}
-                      className="premium-input px-3 py-2"
-                    />
-                    <button onClick={() => removeEditItem(index)} className="text-rose-400 hover:text-rose-300 text-lg font-bold">🗑</button>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="flex flex-col sm:flex-row justify-end gap-3 mt-6">
+            <div className="sticky bottom-0 z-10 mt-4 flex flex-col gap-3 border-t border-slate-700 bg-slate-900 pt-4 sm:flex-row sm:justify-end">
               <button onClick={() => setEditingOrder(null)} className="premium-button-secondary px-4 py-3 rounded-2xl font-bold">Cancel</button>
               <button onClick={saveEditedOrder} disabled={savingEdit} className="premium-button bg-gradient-to-r from-emerald-400 to-green-500 text-slate-950 px-5 py-3 rounded-2xl font-bold disabled:opacity-50">
                 {savingEdit ? "Saving..." : "Save Changes"}
