@@ -144,6 +144,55 @@ exports.getOrders = async (req, res) => {
   }
 };
 
+exports.updateOrder = async (req, res) => {
+  try {
+    console.log("✏️  [API] PUT /api/orders/:id - Updating order...");
+    const { id } = req.params;
+    const { createdAt, items, paymentMethod, mobile } = req.body;
+
+    const order = await Order.findById(id);
+    if (!order) {
+      console.log("⚠️  [ERROR] Order not found:", id);
+      return res.status(404).json({ error: "Order not found" });
+    }
+
+    const normalizedItems = (items || [])
+      .map((item) => ({
+        name: item.name || "",
+        qty: Number(item.qty) || 0,
+        price: Number(item.price) || 0
+      }))
+      .filter((item) => item.name || item.qty || item.price);
+
+    const subtotal = normalizedItems.reduce((sum, item) => sum + item.qty * item.price, 0);
+
+    const updatedOrder = await Order.findByIdAndUpdate(
+      id,
+      {
+        createdAt: createdAt ? new Date(createdAt) : order.createdAt,
+        items: normalizedItems,
+        subtotal,
+        finalTotal: subtotal,
+        paymentMethod: paymentMethod || order.paymentMethod || "Cash",
+        mobile: mobile || order.mobile || "Guest"
+      },
+      { new: true }
+    );
+
+    console.log("✅ [DB] Order updated successfully:", id);
+
+    const io = req.app.get("socketio");
+    if (io) {
+      io.emit("orderUpdated");
+    }
+
+    res.json({ success: true, order: updatedOrder });
+  } catch (error) {
+    console.error("❌ [ERROR] Failed to update order:", error.message);
+    res.status(500).json({ error: error.message });
+  }
+};
+
 exports.deleteOrder = async (req, res) => {
   try {
     console.log("🗑️  [API] DELETE /api/orders/:id - Deleting order...");

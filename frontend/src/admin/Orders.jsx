@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
-import { fetchOrders, deleteOrder } from "../utils/api";
+import { fetchOrders, deleteOrder, updateOrder } from "../utils/api";
 import { getBusinessDate } from "../utils/dateUtils";
 import AdminNavbar from "./AdminNavbar";
 import socket from "../utils/socket";
@@ -11,6 +11,11 @@ const Orders = () => {
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
   const [confirm, setConfirm] = useState({ show: false, id: null });
+  const [editingOrder, setEditingOrder] = useState(null);
+  const [editDate, setEditDate] = useState("");
+  const [editMethod, setEditMethod] = useState("Cash");
+  const [editItems, setEditItems] = useState([]);
+  const [savingEdit, setSavingEdit] = useState(false);
   const shopName = import.meta.env.VITE_SHOP_NAME || "Shop";
 
   const fetchOrdersData = useCallback(async () => {
@@ -64,6 +69,63 @@ THANK YOU
       setConfirm({ show: false, id: null });
     } catch (error) {
       console.error("Error deleting order", error);
+    }
+  };
+
+  const openEditModal = (order) => {
+    setEditingOrder(order);
+    setEditDate(order.createdAt ? new Date(order.createdAt).toISOString().split("T")[0] : "");
+    setEditMethod(order.paymentMethod || "Cash");
+    setEditItems((order.items || []).map((item) => ({
+      name: item.name || "",
+      qty: item.qty || 1,
+      price: item.price || 0
+    })));
+  };
+
+  const updateEditItem = (index, field, value) => {
+    setEditItems((prev) => prev.map((item, i) =>
+      i === index ? { ...item, [field]: field === "qty" || field === "price" ? Number(value) : value } : item
+    ));
+  };
+
+  const addEditItem = () => {
+    setEditItems((prev) => [...prev, { name: "", qty: 1, price: 0 }]);
+  };
+
+  const removeEditItem = (index) => {
+    setEditItems((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const saveEditedOrder = async () => {
+    if (!editingOrder) return;
+
+    try {
+      setSavingEdit(true);
+      const normalizedItems = editItems
+        .filter((item) => (item.name || "").trim() || item.qty > 0 || item.price > 0)
+        .map((item) => ({
+          name: (item.name || "").trim(),
+          qty: Number(item.qty) || 0,
+          price: Number(item.price) || 0
+        }));
+
+      await updateOrder(editingOrder._id, {
+        createdAt: editDate ? `${editDate}T12:00:00` : editingOrder.createdAt,
+        items: normalizedItems,
+        paymentMethod: editMethod,
+        mobile: editingOrder.mobile
+      });
+
+      await fetchOrdersData();
+      setEditingOrder(null);
+      setEditDate("");
+      setEditMethod("Cash");
+      setEditItems([]);
+    } catch (error) {
+      console.error("Error updating order", error);
+    } finally {
+      setSavingEdit(false);
     }
   };
 
@@ -336,13 +398,19 @@ THANK YOU
                         onClick={() => printBill(order)}
                         className="premium-button bg-gradient-to-r from-cyan-400 to-blue-500 text-slate-950 px-3 py-2 rounded-xl font-bold hover:from-cyan-300 hover:to-blue-400 transition-all text-xs sm:text-sm"
                       >
-                        🖨️ Print
+                        Print
+                      </button>
+                      <button
+                        onClick={() => openEditModal(order)}
+                        className="premium-button bg-gradient-to-r from-amber-400 to-orange-500 text-slate-950 px-4 py-2 rounded-xl font-bold hover:from-amber-300 hover:to-orange-400 transition-all text-sm sm:text-base"
+                      >
+                        EDIT
                       </button>
                       <button
                         onClick={() => setConfirm({ show: true, id: order._id })}
                         className="premium-button bg-gradient-to-r from-rose-400 to-red-500 text-slate-950 px-4 py-2 rounded-xl font-bold hover:from-rose-300 hover:to-red-400 transition-all text-sm sm:text-base"
                       >
-                        DELETE 🗑️
+                        DELETE
                       </button>
                     </div>
                   </td>
@@ -353,6 +421,87 @@ THANK YOU
         </div>
       </div>
 
+
+      {editingOrder && (
+        <div className="fixed inset-0 flex items-center justify-center z-[100] bg-black/70 backdrop-blur-sm p-4">
+          <div className="bg-slate-900 border border-slate-700 rounded-3xl max-w-3xl w-full p-5 sm:p-6 shadow-2xl text-slate-100">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-2xl font-black text-amber-300">Edit Order</h2>
+              <button onClick={() => setEditingOrder(null)} className="text-slate-400 hover:text-white text-xl font-bold">✕</button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-semibold text-slate-300 mb-2">Date</label>
+                <input
+                  type="date"
+                  value={editDate}
+                  onChange={(e) => setEditDate(e.target.value)}
+                  className="premium-input w-full px-4 py-3"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-slate-300 mb-2">Payment Method</label>
+                <select
+                  value={editMethod}
+                  onChange={(e) => setEditMethod(e.target.value)}
+                  className="premium-input w-full px-4 py-3"
+                >
+                  <option value="Cash">Cash</option>
+                  <option value="UPI">UPI</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="mt-5">
+              <div className="flex items-center justify-between mb-3">
+                <label className="text-sm font-semibold text-slate-300">Items</label>
+                <button onClick={addEditItem} className="text-sm font-bold text-cyan-400 hover:text-cyan-300">+ Add Item</button>
+              </div>
+
+              <div className="space-y-3">
+                {editItems.map((item, index) => (
+                  <div key={index} className="grid grid-cols-1 md:grid-cols-[1.6fr_0.7fr_0.8fr_auto] gap-2 items-center bg-slate-950/70 p-3 rounded-2xl border border-slate-700">
+                    <input
+                      type="text"
+                      placeholder="Item name"
+                      value={item.name}
+                      onChange={(e) => updateEditItem(index, "name", e.target.value)}
+                      className="premium-input px-3 py-2"
+                    />
+                    <input
+                      type="number"
+                      min="0"
+                      placeholder="Qty"
+                      value={item.qty}
+                      onChange={(e) => updateEditItem(index, "qty", e.target.value)}
+                      className="premium-input px-3 py-2"
+                    />
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      placeholder="Price"
+                      value={item.price}
+                      onChange={(e) => updateEditItem(index, "price", e.target.value)}
+                      className="premium-input px-3 py-2"
+                    />
+                    <button onClick={() => removeEditItem(index)} className="text-rose-400 hover:text-rose-300 text-lg font-bold">🗑</button>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="flex flex-col sm:flex-row justify-end gap-3 mt-6">
+              <button onClick={() => setEditingOrder(null)} className="premium-button-secondary px-4 py-3 rounded-2xl font-bold">Cancel</button>
+              <button onClick={saveEditedOrder} disabled={savingEdit} className="premium-button bg-gradient-to-r from-emerald-400 to-green-500 text-slate-950 px-5 py-3 rounded-2xl font-bold disabled:opacity-50">
+                {savingEdit ? "Saving..." : "Save Changes"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* CUSTOM CONFIRM */}
       {confirm.show && (

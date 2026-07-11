@@ -17,6 +17,7 @@ export const deleteCategory = (id) => API.delete(`/categories/${id}`);
 // Orders
 export const fetchOrders = () => API.get("/orders");
 export const createOrder = (data) => API.post("/orders", data);
+export const updateOrder = (id, data) => API.put(`/orders/${id}`, data);
 export const deleteOrder = (id) => API.delete(`/orders/${id}`);
 
 // Purchases
