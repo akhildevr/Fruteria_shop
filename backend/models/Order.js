@@ -27,7 +27,11 @@ const orderSchema = new mongoose.Schema({
   paymentMethod: {
     type: String,
     default: "Cash"
-  }
+  },
+
+  // Editable bill date shown in Orders admin UI.
+  // (Mongo timestamps' `createdAt` remains immutable via schema timestamps)
+  billDate: Date
 
 }, {
   timestamps: true

@@ -1,6 +1,8 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { fetchOrders, deleteOrder, updateOrder } from "../utils/api";
 import { getBusinessDate } from "../utils/dateUtils";
+import { fetchProducts } from "../utils/api";
+
 import AdminNavbar from "./AdminNavbar";
 import socket from "../utils/socket";
 
@@ -17,6 +19,12 @@ const Orders = () => {
   const [editItems, setEditItems] = useState([]);
   const [savingEdit, setSavingEdit] = useState(false);
   const shopName = import.meta.env.VITE_SHOP_NAME || "Shop";
+
+  const [products, setProducts] = useState([]);
+  const [productsLoading, setProductsLoading] = useState(false);
+
+  const [productPicker, setProductPicker] = useState({ show: false, rowIndex: null });
+
 
   const fetchOrdersData = useCallback(async () => {
     try {
@@ -40,14 +48,34 @@ const Orders = () => {
     return () => socket.off("orderUpdated");
   }, [fetchOrdersData]);
 
+  useEffect(() => {
+    const loadProducts = async () => {
+      try {
+        setProductsLoading(true);
+        const res = await fetchProducts();
+        setProducts(Array.isArray(res.data) ? res.data : []);
+      } catch (e) {
+        console.error("Error fetching products for order edit:", e);
+        setProducts([]);
+      } finally {
+        setProductsLoading(false);
+      }
+    };
+
+    loadProducts();
+  }, []);
+
+
   const printBill = (order) => {
+    const baseDate = order.billDate || order.createdAt;
     const receipt = `
 ================================
          ${shopName.toUpperCase()}
 ================================
 Bill ID : ${order.billId || order._id}
-Date    : ${new Date(order.createdAt).toLocaleDateString()}
+Date    : ${new Date(baseDate).toLocaleDateString()}
 Mobile  : ${order.mobile}
+
 Payment : ${order.paymentMethod || "Cash"}
 --------------------------------
 ${order.items.map(item => `${item.name}\n${item.qty} x ${item.price}    ₹${item.qty * item.price}`).join("\n")}
@@ -74,27 +102,93 @@ THANK YOU
 
   const openEditModal = (order) => {
     setEditingOrder(order);
-    setEditDate(order.createdAt ? new Date(order.createdAt).toISOString().split("T")[0] : "");
+    setEditDate(
+      order.billDate
+        ? new Date(order.billDate).toISOString().split("T")[0]
+        : order.createdAt
+          ? new Date(order.createdAt).toISOString().split("T")[0]
+          : ""
+    );
     setEditMethod(order.paymentMethod || "Cash");
+
     setEditItems((order.items || []).map((item) => ({
       name: item.name || "",
       qty: item.qty || 1,
-      price: item.price || 0
+      price: item.price || 0,
+      productId: item.productId || undefined
     })));
+
+    setProductPicker({ show: false, rowIndex: null });
   };
+
 
   const updateEditItem = (index, field, value) => {
-    setEditItems((prev) => prev.map((item, i) =>
-      i === index ? { ...item, [field]: field === "qty" || field === "price" ? Number(value) : value } : item
-    ));
+    setEditItems((prev) =>
+      prev.map((item, i) =>
+        i === index
+          ? {
+              ...item,
+              [field]: field === "qty" || field === "price" ? Number(value) : value
+            }
+          : item
+      )
+    );
   };
 
+
   const addEditItem = () => {
-    setEditItems((prev) => [...prev, { name: "", qty: 1, price: 0 }]);
+    setEditItems((prev) => [...prev, { name: "", qty: 1, price: 0, productId: undefined }]);
+    // open picker for the newly added row
+    setProductPicker((prev) => ({ show: true, rowIndex: editItems.length }));
   };
+
 
   const removeEditItem = (index) => {
     setEditItems((prev) => prev.filter((_, i) => i !== index));
+    setProductPicker((prev) => {
+      if (!prev.show) return prev;
+      if (prev.rowIndex === index) return { show: false, rowIndex: null };
+      // if we removed an earlier row, shift picker index
+      if (prev.rowIndex !== null && prev.rowIndex > index) {
+        return { ...prev, rowIndex: prev.rowIndex - 1 };
+      }
+      return prev;
+    });
+  };
+
+
+  const normalizedUnitPriceFromProduct = (product) => {
+    // Try common price field names
+    const candidates = [product.price, product.unitPrice, product.sellingPrice, product.rate, product.costPrice];
+    const found = candidates.find((v) => v !== undefined && v !== null && !Number.isNaN(Number(v)));
+    return found !== undefined ? Number(found) : 0;
+  };
+
+  const lineTotalForItem = (item) => {
+    const qty = Number(item.qty) || 0;
+    const price = Number(item.price) || 0;
+    return qty * price;
+  };
+
+  const computedOrderTotal = useMemo(() => {
+    return editItems.reduce((sum, item) => sum + lineTotalForItem(item), 0);
+  }, [editItems]);
+
+  const pickProductForRow = (rowIndex, product) => {
+    const unitPrice = normalizedUnitPriceFromProduct(product);
+    setEditItems((prev) =>
+      prev.map((it, i) =>
+        i !== rowIndex
+          ? it
+          : {
+              ...it,
+              name: product?.name || it.name,
+              price: unitPrice,
+              productId: product?._id || product?.id || it.productId
+            }
+      )
+    );
+    setProductPicker({ show: false, rowIndex: null });
   };
 
   const saveEditedOrder = async () => {
@@ -110,8 +204,10 @@ THANK YOU
           price: Number(item.price) || 0
         }));
 
+
+
       await updateOrder(editingOrder._id, {
-        createdAt: editDate ? `${editDate}T12:00:00` : editingOrder.createdAt,
+        createdAt: editDate ? `${editDate}T12:00:00` : null,
         items: normalizedItems,
         paymentMethod: editMethod,
         mobile: editingOrder.mobile
@@ -129,9 +225,23 @@ THANK YOU
     }
   };
 
+const businessTime = (value) => {
+    if (!value) return null;
+    const d = new Date(value);
+    const normalized = new Date(d);
+    if (normalized.getHours() < 2) {
+      normalized.setDate(normalized.getDate() - 1);
+    }
+    normalized.setHours(2, 0, 0, 0);
+    return normalized;
+  };
+
+
+
   const selectedRangeOrders = (() => {
     const from = fromDate || "";
     const to = toDate || "";
+
 
     // Allow single day (from only) or range (both dates)
     if (!from && !to) {
@@ -155,19 +265,48 @@ THANK YOU
     }
 
     return orders.filter((order) => {
-      const d = new Date(order.createdAt).getTime();
+      const base = order.billDate || order.createdAt;
+      const d = new Date(base).getTime();
       return d >= fromMs && d <= toMs;
     });
   })();
 
   const selectedDateSales = selectedRangeOrders.reduce((a, b) => a + b.finalTotal, 0);
 
-  const filteredOrders = selectedRangeOrders.filter(
-    (order) =>
-      (order.mobile && order.mobile.includes(searchTerm)) ||
-      (order.billId &&
-        order.billId.toLowerCase().includes(searchTerm.toLowerCase()))
-  );
+  const getDeterministicSortKey = (order) => {
+    const base = order.billDate || order.createdAt;
+    const d = businessTime(base);
+    const ts = d ? d.getTime() : new Date(base).getTime();
+    const billId = order.billId || "";
+    return { ts, billId: String(billId) };
+  };
+
+  const filteredOrders = (() => {
+    const term = (searchTerm || "").trim().toLowerCase();
+
+    const sorted = selectedRangeOrders
+      .slice()
+      .sort((a, b) => {
+        const ak = getDeterministicSortKey(a);
+        const bk = getDeterministicSortKey(b);
+        // newest first by effective/billDate
+        if (ak.ts !== bk.ts) return bk.ts - ak.ts;
+        // stable tie-breaker
+        return ak.billId.localeCompare(bk.billId);
+      });
+
+    if (!term) return sorted;
+
+    return sorted.filter((order) => {
+      const mobile = String(order?.mobile ?? "");
+      const billId = String(order?.billId ?? "");
+
+      return (
+        (mobile && mobile.toLowerCase().includes(term)) ||
+        (billId && billId.toLowerCase().includes(term))
+      );
+    });
+  })();
 
 
   const printSalesReport = () => {
@@ -177,7 +316,8 @@ THANK YOU
         const isFirst = i === 0;
         const isLast = i === order.items.length - 1;
         const customerName = order.mobile && order.mobile.toLowerCase() !== "guest" ? order.mobile : "Guest";
-        const orderDate = new Date(order.createdAt);
+        const orderDate = new Date(order.billDate || order.createdAt);
+
         const day = String(orderDate.getDate()).padStart(2, '0');
         const month = orderDate.toLocaleString('en-GB', { month: 'short' }).toUpperCase();
         const year = orderDate.getFullYear();
@@ -370,7 +510,7 @@ THANK YOU
                 <tr><td colSpan="6" className="p-6 text-center text-slate-400">No orders found</td></tr>
               ) : filteredOrders.map((order, index) => (
                 <tr key={order._id} className={`${index % 2 === 0 ? 'bg-slate-950/50' : 'bg-slate-900/50'} hover:bg-slate-800/50 transition-colors`}>
-                  <td className="p-3 sm:p-4 font-semibold text-slate-100 text-sm sm:text-base">{new Date(order.createdAt).toLocaleDateString()}</td>
+                  <td className="p-3 sm:p-4 font-semibold text-slate-100 text-sm sm:text-base">{new Date(order.billDate || order.createdAt).toLocaleDateString()}</td>
                   <td className="p-3 sm:p-4">
                     <div className="font-semibold text-slate-100 text-sm sm:text-base">{order.mobile || "GUEST"}</div>
                     <div className="text-xs font-medium text-slate-400 font-mono">{order.billId || order._id}</div>
@@ -464,13 +604,47 @@ THANK YOU
                 <div className="space-y-3">
                   {editItems.map((item, index) => (
                     <div key={index} className="grid grid-cols-1 gap-2 rounded-2xl border border-slate-700 bg-slate-950/70 p-3 md:grid-cols-[1.6fr_0.7fr_0.8fr_auto] md:items-center">
-                      <input
-                        type="text"
-                        placeholder="Item name"
-                        value={item.name}
-                        onChange={(e) => updateEditItem(index, "name", e.target.value)}
-                        className="premium-input px-3 py-2"
-                      />
+                      <div className="relative">
+                        <input
+                          type="text"
+                          placeholder="Item name (click to pick)"
+                          value={item.name}
+                          onClick={() => setProductPicker({ show: true, rowIndex: index })}
+                          onChange={(e) => {
+                            // allow manual typing
+                            updateEditItem(index, "name", e.target.value);
+                            setProductPicker({ show: false, rowIndex: null });
+                          }}
+                          className="premium-input px-3 py-2"
+                        />
+
+                        {productPicker.show && productPicker.rowIndex === index && (
+                          <div className="absolute left-0 right-0 mt-2 z-20 max-h-56 overflow-y-auto rounded-xl border border-slate-700 bg-slate-900 p-2 shadow-2xl">
+                            {productsLoading ? (
+                              <div className="px-2 py-2 text-sm text-slate-300">Loading...</div>
+                            ) : products.length === 0 ? (
+                              <div className="px-2 py-2 text-sm text-slate-300">No products</div>
+                            ) : (
+                              products
+                                .slice()
+                                .sort((a, b) => String(a.name || "").localeCompare(String(b.name || "")))
+                                .map((p, pIndex) => (
+                                  <button
+                                    key={p._id || pIndex}
+                                    type="button"
+                                    onClick={() => pickProductForRow(index, p)}
+                                    className="w-full text-left px-3 py-2 rounded-lg hover:bg-slate-800/80 transition-colors flex items-center justify-between gap-3"
+                                  >
+                                    <span className="font-semibold text-slate-100 truncate">{p.name}</span>
+                                    <span className="text-slate-300 text-sm whitespace-nowrap">
+                                      ₹{normalizedUnitPriceFromProduct(p)}
+                                    </span>
+                                  </button>
+                                ))
+                            )}
+                          </div>
+                        )}
+                      </div>
                       <input
                         type="number"
                         min="0"
@@ -479,6 +653,7 @@ THANK YOU
                         onChange={(e) => updateEditItem(index, "qty", e.target.value)}
                         className="premium-input px-3 py-2"
                       />
+                      <div className="text-right text-sm font-bold text-emerald-300 md:col-span-3 hidden">{lineTotalForItem(item)}</div>
                       <input
                         type="number"
                         min="0"
@@ -488,6 +663,9 @@ THANK YOU
                         onChange={(e) => updateEditItem(index, "price", e.target.value)}
                         className="premium-input px-3 py-2"
                       />
+                      <div className="hidden">
+                        {lineTotalForItem(item)}
+                      </div>
                       <button onClick={() => removeEditItem(index)} className="text-rose-400 hover:text-rose-300 text-lg font-bold md:justify-self-end">🗑</button>
                     </div>
                   ))}
@@ -495,11 +673,19 @@ THANK YOU
               </div>
             </div>
 
-            <div className="sticky bottom-0 z-10 mt-4 flex flex-col gap-3 border-t border-slate-700 bg-slate-900 pt-4 sm:flex-row sm:justify-end">
-              <button onClick={() => setEditingOrder(null)} className="premium-button-secondary px-4 py-3 rounded-2xl font-bold">Cancel</button>
-              <button onClick={saveEditedOrder} disabled={savingEdit} className="premium-button bg-gradient-to-r from-emerald-400 to-green-500 text-slate-950 px-5 py-3 rounded-2xl font-bold disabled:opacity-50">
-                {savingEdit ? "Saving..." : "Save Changes"}
-              </button>
+            <div className="sticky bottom-0 z-10 mt-4 border-t border-slate-700 bg-slate-900 pt-4">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                <div className="text-right sm:text-left">
+                  <div className="text-xs font-semibold uppercase tracking-widest text-slate-400">Order Total</div>
+                  <div className="text-xl font-black text-emerald-300">₹{computedOrderTotal.toFixed(2)}</div>
+                </div>
+                <div className="flex flex-col sm:flex-row gap-3 sm:justify-end">
+                  <button onClick={() => setEditingOrder(null)} className="premium-button-secondary px-4 py-3 rounded-2xl font-bold">Cancel</button>
+                  <button onClick={saveEditedOrder} disabled={savingEdit} className="premium-button bg-gradient-to-r from-emerald-400 to-green-500 text-slate-950 px-5 py-3 rounded-2xl font-bold disabled:opacity-50">
+                    {savingEdit ? "Saving..." : "Save Changes"}
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </div>

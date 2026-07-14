@@ -43,7 +43,14 @@ const ProductAnalysis = () => {
     return () => socket.off("orderUpdated", fetchOrdersData);
   }, [fetchOrdersData]);
 
-  const monthKey = (date) => new Date(date).toISOString().slice(0, 7);
+  const monthKey = (date) => {
+    if (!date) return "";
+    const d = new Date(date);
+    // Keep consistent with business-day cutover (2 AM)
+    if (d.getHours() < 2) d.setDate(d.getDate() - 1);
+    d.setHours(2, 0, 0, 0);
+    return d.toISOString().slice(0, 7);
+  };
   const monthLabel = (month) => new Date(`${month}-01`).toLocaleDateString("en-US", { month: "short", year: "numeric" });
 
   const { productStats, monthOptions, productStatsByMonth, overallTotals } = useMemo(() => {
@@ -55,7 +62,9 @@ const ProductAnalysis = () => {
     let totalUpiRevenue = 0;
 
     orders.forEach((order) => {
-      const orderMonth = monthKey(order.createdAt);
+      const orderMonth = monthKey(order.billDate || order.createdAt);
+
+
       const isUpi = order.paymentMethod === "UPI";
 
       if (!monthly[orderMonth]) {

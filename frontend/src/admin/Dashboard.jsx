@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { fetchOrders, fetchTodaySales, fetchPurchases, getMobileFieldSetting, setMobileFieldSetting } from "../utils/api";
+import { fetchOrders, fetchTodaySales, fetchPurchases, getMobileFieldSetting, setMobileFieldSetting, getOffersInBillingSetting, setOffersInBillingSetting } from "../utils/api";
+
 import { getBusinessDate } from "../utils/dateUtils";
 import AdminNavbar from "./AdminNavbar";
 import socket from "../utils/socket";
@@ -13,10 +14,19 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const [purchases, setPurchases] = useState([]);
   const [showMobileField, setShowMobileField] = useState(true);
+  const [showOffersInBilling, setShowOffersInBilling] = useState(false);
   const [settingsLoading, setSettingsLoading] = useState(false);
 
+
   const shopName = import.meta.env.VITE_SHOP_NAME || "Shop";
-  const todayStr = new Date().toISOString().split("T")[0];
+  const todayBusiness = (() => {
+    const d = new Date();
+    if (d.getHours() < 2) d.setDate(d.getDate() - 1);
+    d.setHours(2, 0, 0, 0);
+    return d.toISOString().split("T")[0];
+  })();
+
+  const todayStr = todayBusiness;
 
   const formatCurrency = (value) => {
     const numberValue = typeof value === "number" ? value : Number(value) || 0;
@@ -41,6 +51,21 @@ const Dashboard = () => {
     }
   };
 
+  const toggleOffersInBilling = async () => {
+    const newValue = !showOffersInBilling;
+    setSettingsLoading(true);
+    try {
+      setShowOffersInBilling(newValue);
+      await setOffersInBillingSetting(newValue);
+    } catch (error) {
+      console.error("Error updating offers setting", error);
+      setShowOffersInBilling((prev) => !prev);
+    } finally {
+      setSettingsLoading(false);
+    }
+  };
+
+
 
   useEffect(() => {
     const loadInitialData = async () => {
@@ -58,10 +83,21 @@ const Dashboard = () => {
           } catch (e) {
             console.error("Error loading mobile field setting", e);
           }
+        })(),
+        (async () => {
+          try {
+            const res = await getOffersInBillingSetting();
+            if (typeof res.data?.showOffersInBilling === "boolean") {
+              setShowOffersInBilling(res.data.showOffersInBilling);
+            }
+          } catch (e) {
+            console.error("Error loading offers setting", e);
+          }
         })()
       ]);
       setLoading(false);
     };
+
     loadInitialData();
 
 
@@ -132,7 +168,7 @@ THANK YOU
   const totalSales = orders.reduce((a, b) => a + b.finalTotal, 0);
 
   const selectedDateOrders = selectedDate
-    ? orders.filter(order => getBusinessDate(order.createdAt) === selectedDate)
+    ? orders.filter(order => getBusinessDate(order.billDate || order.createdAt) === selectedDate)
     : orders;
 
   const selectedDateCashSales = selectedDateOrders
@@ -149,14 +185,41 @@ THANK YOU
   const totalPurchaseCost = purchases.reduce((a, b) => a + (Number(b.price) || 0), 0);
 
   // Today's sales breakdown by payment method
-  const todayOrders = orders.filter(order => getBusinessDate(order.createdAt) === todayStr);
+  const todayOrders = orders.filter(order => getBusinessDate(order.billDate || order.createdAt) === todayStr);
+
+
   const todayCashSales = todayOrders.filter(o => !o.paymentMethod || o.paymentMethod === "Cash").reduce((a, b) => a + b.finalTotal, 0);
   const todayUpiSales = todayOrders.filter(o => o.paymentMethod === "UPI").reduce((a, b) => a + b.finalTotal, 0);
 
-  const filteredOrders = selectedDateOrders.filter(order => 
-    (order.mobile && order.mobile.includes(searchTerm)) || 
-    (order.billId && order.billId.toLowerCase().includes(searchTerm.toLowerCase()))
-  );
+  const getDeterministicSortKey = (order) => {
+    const base = order.billDate || order.createdAt;
+    // matches business-day logic used across dashboard
+    const businessDate = (() => {
+      const d = new Date(base);
+      if (d.getHours() < 2) d.setDate(d.getDate() - 1);
+      d.setHours(2, 0, 0, 0);
+      return d;
+    })();
+
+    const ts = businessDate ? businessDate.getTime() : new Date(base).getTime();
+    const billId = order.billId || "";
+    return { ts, billId: String(billId) };
+  };
+
+  const filteredOrders = selectedDateOrders
+    .slice()
+    .sort((a, b) => {
+      const ak = getDeterministicSortKey(a);
+      const bk = getDeterministicSortKey(b);
+      // newest first by effective/billDate
+      if (ak.ts !== bk.ts) return bk.ts - ak.ts;
+      // stable tie-breaker
+      return ak.billId.localeCompare(bk.billId);
+    })
+    .filter(order => 
+      (order.mobile && order.mobile.includes(searchTerm)) || 
+      (order.billId && order.billId.toLowerCase().includes(searchTerm.toLowerCase()))
+    );
 
   const printSalesReport = () => {
     const reportOrders = selectedDateOrders;
@@ -165,7 +228,8 @@ THANK YOU
         const isFirst = i === 0;
         const isLast = i === order.items.length - 1;
         const customerName = order.mobile && order.mobile.toLowerCase() !== "guest" ? order.mobile : "Guest";
-        const orderDate = new Date(order.createdAt);
+        const orderDate = new Date(order.billDate || order.createdAt);
+
         const day = String(orderDate.getDate()).padStart(2, '0');
         const month = orderDate.toLocaleString('en-GB', { month: 'short' }).toUpperCase();
         const year = orderDate.getFullYear();
@@ -269,32 +333,61 @@ THANK YOU
 
       <div className="mx-auto w-full max-w-6xl mb-8">
         <div className="bg-slate-950/90 p-4 rounded-[2rem] border border-slate-700/70 shadow-xl">
-          <div className="flex items-center justify-between gap-4">
-            <label className="text-sm sm:text-base font-semibold text-slate-100 uppercase tracking-[0.14em]">Mobile Field in Billing</label>
-            <button
-              onClick={toggleMobileField}
-              disabled={settingsLoading}
-              className={`relative inline-flex items-center h-10 w-16 rounded-full transition-all duration-300 ${
-                settingsLoading
-                  ? "bg-slate-600/60 cursor-not-allowed"
-                  : showMobileField
-                    ? "bg-emerald-500 shadow-lg shadow-emerald-500/50"
-                    : "bg-slate-700 shadow-lg shadow-slate-700/50"
-              }`}
-            >
-
-              <span
-                className={`inline-block h-8 w-8 transform rounded-full bg-white transition-transform duration-300 ${
-                  showMobileField ? "translate-x-1" : "-translate-x-1"
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="flex items-center justify-between gap-4 w-full">
+              <label className="text-sm sm:text-base font-semibold text-slate-100 uppercase tracking-[0.14em]">Mobile Field in Billing</label>
+              <button
+                onClick={toggleMobileField}
+                disabled={settingsLoading}
+                className={`relative inline-flex items-center h-10 w-16 rounded-full transition-all duration-300 ${
+                  settingsLoading
+                    ? "bg-slate-600/60 cursor-not-allowed"
+                    : showMobileField
+                      ? "bg-emerald-500 shadow-lg shadow-emerald-500/50"
+                      : "bg-slate-700 shadow-lg shadow-slate-700/50"
                 }`}
-              />
-            </button>
-            <span className={`text-sm font-bold uppercase tracking-wide ${
-              showMobileField ? "text-emerald-400" : "text-slate-400"
-            }`}>
-              {showMobileField ? "ENABLED" : "DISABLED"}
-            </span>
+              >
+
+                <span
+                  className={`inline-block h-8 w-8 transform rounded-full bg-white transition-transform duration-300 ${
+                    showMobileField ? "translate-x-1" : "-translate-x-1"
+                  }`}
+                />
+              </button>
+              <span className={`text-sm font-bold uppercase tracking-wide ${
+                showMobileField ? "text-emerald-400" : "text-slate-400"
+              }`}>
+                {showMobileField ? "ENABLED" : "DISABLED"}
+              </span>
+            </div>
+
+            <div className="flex items-center justify-between gap-4 w-full">
+              <label className="text-sm sm:text-base font-semibold text-slate-100 uppercase tracking-[0.14em]">Offers in Billing</label>
+              <button
+                onClick={toggleOffersInBilling}
+                disabled={settingsLoading}
+                className={`relative inline-flex items-center h-10 w-16 rounded-full transition-all duration-300 ${
+                  settingsLoading
+                    ? "bg-slate-600/60 cursor-not-allowed"
+                    : showOffersInBilling
+                      ? "bg-emerald-500 shadow-lg shadow-emerald-500/50"
+                      : "bg-slate-700 shadow-lg shadow-slate-700/50"
+                }`}
+              >
+                <span
+                  className={`inline-block h-8 w-8 transform rounded-full bg-white transition-transform duration-300 ${
+                    showOffersInBilling ? "translate-x-1" : "-translate-x-1"
+                  }`}
+                />
+              </button>
+              <span className={`text-sm font-bold uppercase tracking-wide ${
+                showOffersInBilling ? "text-emerald-400" : "text-slate-400"
+              }`}>
+                {showOffersInBilling ? "ENABLED" : "DISABLED"}
+              </span>
+            </div>
           </div>
+
         </div>
       </div>
 
@@ -395,7 +488,8 @@ THANK YOU
               <tbody>
                 {filteredOrders.map((order, index) => (
                   <tr key={order._id} className={`${index % 2 === 0 ? 'bg-slate-950/40' : 'bg-slate-900/40'} hover:bg-slate-800/60 transition-colors border-b border-slate-700/50 last:border-0`}>
-                    <td className="p-3 sm:p-4 font-semibold text-slate-100 text-sm sm:text-base">{new Date(order.createdAt).toLocaleDateString()}</td>
+                    <td className="p-3 sm:p-4 font-semibold text-slate-100 text-sm sm:text-base">{new Date(order.billDate || order.createdAt).toLocaleDateString()}</td>
+
                     <td className="p-3 sm:p-4 font-mono text-slate-300 text-sm sm:text-base">{order.billId}</td>
                     <td className="p-3 sm:p-4 font-semibold text-slate-100 text-sm sm:text-base">{order.mobile || "GUEST"}</td>
                     <td className="p-3 sm:p-4 font-semibold text-sm sm:text-base">

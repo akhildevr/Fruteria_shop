@@ -1,6 +1,8 @@
 const Customer = require("../models/Customer");
 const Order = require("../models/Order");
+const Settings = require("../models/Settings");
 const generateBillId = require("../utils/generateBillId");
+
 
 exports.createOrder = async (req, res) => {
 
@@ -51,18 +53,29 @@ exports.createOrder = async (req, res) => {
     } else {
       console.log("⚠️  [API] No valid mobile number provided. Processing as guest order.");
     }
-    // APPLY DISCOUNT
+    // Determine whether offers are enabled in billing
+    // Key must match backend settingsController OFFERS_IN_BILLING_KEY = "showOffersInBilling"
+    let showOffersInBilling = false;
+    try {
+      const offersSetting = await Settings.findOne({ key: "showOffersInBilling" });
+      showOffersInBilling = offersSetting ? Boolean(offersSetting.value) : false;
+    } catch (e) {
+      console.error("❌ [ERROR] Failed to read offers setting in createOrder:", e);
+      showOffersInBilling = false;
+    }
+
+    // APPLY DISCOUNT (only if offers are enabled)
     let discount = 0;
-    if (amountAfterReward >= 500) {
+    if (showOffersInBilling && amountAfterReward >= 500) {
       discount = amountAfterReward * 0.05;
     }
 
     // FINAL TOTAL
     const finalTotal = amountAfterReward - discount;
 
-    // ADD NEW REWARD
+    // ADD NEW REWARD (only if offers are enabled)
     if (customer) { // Only earn rewards if a customer is associated
-      rewardEarned = amountAfterReward < 500 ? Math.floor(finalTotal * 0.05) : 0;
+      rewardEarned = showOffersInBilling && amountAfterReward < 500 ? Math.floor(finalTotal * 0.05) : 0;
       customer.rewardPoints += rewardEarned;
       customer.purchaseCount += 1;
       customer.totalSpent += finalTotal;
@@ -150,6 +163,9 @@ exports.updateOrder = async (req, res) => {
     const { id } = req.params;
     const { createdAt, items, paymentMethod, mobile } = req.body;
 
+    // Editable bill date (separate from Mongo/Mongoose timestamps)
+    const editableBillDate = createdAt ? new Date(createdAt) : null;
+
     const order = await Order.findById(id);
     if (!order) {
       console.log("⚠️  [ERROR] Order not found:", id);
@@ -169,7 +185,7 @@ exports.updateOrder = async (req, res) => {
     const updatedOrder = await Order.findByIdAndUpdate(
       id,
       {
-        createdAt: createdAt ? new Date(createdAt) : order.createdAt,
+        ...(editableBillDate ? { billDate: editableBillDate } : {}),
         items: normalizedItems,
         subtotal,
         finalTotal: subtotal,
@@ -181,10 +197,9 @@ exports.updateOrder = async (req, res) => {
 
     console.log("✅ [DB] Order updated successfully:", id);
 
+    // Notify admins UI so day totals / product analysis recalculate
     const io = req.app.get("socketio");
-    if (io) {
-      io.emit("orderUpdated");
-    }
+    if (io) io.emit("orderUpdated");
 
     res.json({ success: true, order: updatedOrder });
   } catch (error) {

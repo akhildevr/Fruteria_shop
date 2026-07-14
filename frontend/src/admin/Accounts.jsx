@@ -34,6 +34,7 @@ const getDayBucket = (value) => {
 
   normalized.setHours(2, 0, 0, 0);
 
+
   const start = new Date(normalized);
   const end = new Date(start);
   end.setDate(end.getDate() + 1);
@@ -84,7 +85,8 @@ const Accounts = () => {
     const grouped = new Map();
 
     orders.forEach((order) => {
-      const { start: createdAt } = getDayBucket(order.createdAt);
+      const { start: createdAt } = getDayBucket(order.billDate || order.createdAt);
+
       const year = createdAt.getFullYear();
       const month = String(createdAt.getMonth() + 1).padStart(2, "0");
       const day = String(createdAt.getDate()).padStart(2, "0");

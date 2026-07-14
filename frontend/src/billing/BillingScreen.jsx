@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import { fetchProducts, fetchCustomer, createOrder } from "../utils/api";
+import { fetchProducts, fetchCustomer, createOrder, getOffersInBillingSetting } from "../utils/api";
+
 import socket from "../utils/socket";
 import { getMobileFieldSetting } from "../utils/api";
 
@@ -18,7 +19,9 @@ const BillingScreen = () => {
   const [paymentMethod, setPaymentMethod] = useState("Cash");
   const [cashGiven, setCashGiven] = useState("");
   const [showMobileField, setShowMobileField] = useState(true);
+  const [showOffersInBilling, setShowOffersInBilling] = useState(false);
   const [settingsLoading, setSettingsLoading] = useState(false);
+
 
   const shopName = import.meta.env.VITE_SHOP_NAME || "Shop";
 
@@ -43,15 +46,26 @@ const BillingScreen = () => {
       } catch (e) {
         console.error("Error loading mobile field setting", e);
       }
+
+      try {
+        const res = await getOffersInBillingSetting();
+        if (typeof res.data?.showOffersInBilling === "boolean") {
+          setShowOffersInBilling(res.data.showOffersInBilling);
+        }
+      } catch (e) {
+        console.error("Error loading offers setting", e);
+      }
     };
+
 
     socket.on("productUpdated", () => fetchProductsData(false));
     // Update instantly when admin toggles the mobile-field setting
     socket.on("settingsUpdated", (payload) => {
-      if (payload?.key === "showMobileFieldInBilling") {
+      if (payload?.key === "showMobileFieldInBilling" || payload?.key === "showOffersInBilling") {
         loadSetting();
       }
     });
+
 
     loadSetting();
 
@@ -131,9 +145,10 @@ const BillingScreen = () => {
   const subtotal = cart.reduce((sum, item) => sum + item.price * item.qty, 0);
   const rewardUsed = walletPoints > 20 ? Math.min(walletPoints, subtotal) : 0;
   const amountAfterReward = subtotal - rewardUsed;
-  const discount = amountAfterReward >= 500 ? amountAfterReward * 0.05 : 0;
+  const discount = showOffersInBilling && amountAfterReward >= 500 ? amountAfterReward * 0.05 : 0;
   const finalTotal = amountAfterReward - discount;
-  const rewardPoints = amountAfterReward < 500 ? Math.floor(finalTotal * 0.05) : 0;
+  const rewardPoints = showOffersInBilling && amountAfterReward < 500 ? Math.floor(finalTotal * 0.05) : 0;
+
   const totalItems = cart.reduce((a, b) => a + b.qty, 0);
   const balance = cashGiven ? parseFloat(cashGiven) - finalTotal : 0;
 
@@ -170,11 +185,14 @@ const BillingScreen = () => {
       lines.push(formatLine("Reward Used", `-₹${rewardUsed}`));
     }
 
-    lines.push(formatLine("Discount", ` ₹${discount}`));
-
-    if (!isGuest) {
-      lines.push(formatLine("Reward Added", `+${rewardPoints}`));
+    if (showOffersInBilling) {
+      lines.push(formatLine("Offer Discount", ` ₹${discount}`));
     }
+
+    if (showOffersInBilling && !isGuest) {
+      lines.push(formatLine("Offer Reward Added", `+${rewardPoints}`));
+    }
+
 
     lines.push(
       "--------------------------------",
@@ -320,8 +338,9 @@ const BillingScreen = () => {
             <div className="flex flex-col sm:flex-row justify-between gap-3 font-semibold"><span>Items:</span><span>{totalItems}</span></div>
             <div className="flex flex-col sm:flex-row justify-between gap-3 font-semibold"><span>Subtotal:</span><span>₹{subtotal}</span></div>
             {rewardUsed > 0 && <div className="flex flex-col sm:flex-row justify-between gap-3 font-semibold text-amber-300"><span>Reward Used:</span><span>-₹{rewardUsed}</span></div>}
-            {discount > 0 && <div className="flex flex-col sm:flex-row justify-between gap-3 font-semibold text-rose-300"><span>Discount:</span><span>₹{discount}</span></div>}
-            {mobile.length >= 10 && <div className="flex flex-col sm:flex-row justify-between gap-3 font-semibold text-emerald-300"><span>Reward Earned:</span><span>+{rewardPoints}</span></div>}
+            {showOffersInBilling && discount > 0 && <div className="flex flex-col sm:flex-row justify-between gap-3 font-semibold text-rose-300"><span>Offer Discount:</span><span>₹{discount}</span></div>}
+            {showOffersInBilling && mobile.length >= 10 && rewardPoints > 0 && <div className="flex flex-col sm:flex-row justify-between gap-3 font-semibold text-emerald-300"><span>Offer Reward Earned:</span><span>+{rewardPoints}</span></div>}
+
             <div className="flex flex-col sm:flex-row justify-between text-xl font-black mt-6 bg-gradient-to-r from-amber-300 via-amber-200 to-slate-100 text-slate-950 p-4 sm:p-5 rounded-[1.75rem] shadow-[0_20px_60px_-30px_rgba(250,204,21,0.9)]">
               <span>TOTAL</span>
               <span>₹{finalTotal}</span>

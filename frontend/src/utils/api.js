@@ -54,5 +54,10 @@ export const getMobileFieldSetting = () => API.get("/settings/mobile-field");
 export const setMobileFieldSetting = (showMobileField) =>
   API.post("/settings/mobile-field", { showMobileField });
 
+export const getOffersInBillingSetting = () => API.get("/settings/offers-in-billing");
+export const setOffersInBillingSetting = (showOffersInBilling) =>
+  API.post("/settings/offers-in-billing", { showOffersInBilling });
+
 export default API;
+
 
