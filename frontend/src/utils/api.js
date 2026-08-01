@@ -48,6 +48,8 @@ export const deleteShopExpense = (id) => API.delete(`/shopexpenses/${id}`);
 
 // Analytics
 export const fetchTodaySales = () => API.get("/analytics/today-sales");
+export const fetchSalesByDate = (billDate) => API.get("/analytics/sales-by-date", { params: { billDate } });
+
 
 // Settings
 export const getMobileFieldSetting = () => API.get("/settings/mobile-field");

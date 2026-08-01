@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
-import { fetchOrders, fetchTodaySales, fetchPurchases, getMobileFieldSetting, setMobileFieldSetting, getOffersInBillingSetting, setOffersInBillingSetting } from "../utils/api";
+import { fetchOrders, fetchTodaySales, fetchPurchases, fetchSalesByDate, getMobileFieldSetting, setMobileFieldSetting, getOffersInBillingSetting, setOffersInBillingSetting } from "../utils/api";
+
+
 
 import { getBusinessDate } from "../utils/dateUtils";
 import AdminNavbar from "./AdminNavbar";
@@ -9,6 +11,9 @@ import socket from "../utils/socket";
 const Dashboard = () => {
   const [orders, setOrders] = useState([]);
   const [todaySales, setTodaySales] = useState(0);
+  const [todayCashSales, setTodayCashSales] = useState(0);
+  const [todayUpiSales, setTodayUpiSales] = useState(0);
+
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedDate, setSelectedDate] = useState("");
   const [loading, setLoading] = useState(true);
@@ -138,6 +143,8 @@ const Dashboard = () => {
     try {
       const res = await fetchTodaySales();
       setTodaySales(res.data.totalSales);
+      setTodayCashSales(res.data.todayCashSales);
+      setTodayUpiSales(res.data.todayUpiSales);
     } catch (error) {
       console.error("Error fetching today's sales", error);
     }
@@ -171,25 +178,44 @@ THANK YOU
     ? orders.filter(order => getBusinessDate(order.billDate || order.createdAt) === selectedDate)
     : orders;
 
-  const selectedDateCashSales = selectedDateOrders
-    .filter(o => !o.paymentMethod || o.paymentMethod === "Cash")
-    .reduce((a, b) => a + b.finalTotal, 0);
-
-  const selectedDateUpiSales = selectedDateOrders
-    .filter(o => o.paymentMethod === "UPI")
-    .reduce((a, b) => a + b.finalTotal, 0);
-
-  const selectedDateSales = selectedDateOrders.reduce((a, b) => a + b.finalTotal, 0);
-
-
   const totalPurchaseCost = purchases.reduce((a, b) => a + (Number(b.price) || 0), 0);
 
-  // Today's sales breakdown by payment method
-  const todayOrders = orders.filter(order => getBusinessDate(order.billDate || order.createdAt) === todayStr);
+  // Dynamic day totals (cash/upi/total) from backend so it stays correct even after billDate edits
+  const [daySalesMeta, setDaySalesMeta] = useState(null);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const run = async () => {
+      if (!selectedDate) {
+        setDaySalesMeta(null);
+        return;
+      }
+      try {
+        const res = await fetchSalesByDate(selectedDate);
+        if (!cancelled) setDaySalesMeta(res.data);
+      } catch (e) {
+        console.error("Error fetching sales by date", e);
+        if (!cancelled) setDaySalesMeta(null);
+      }
+    };
+
+    run();
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedDate]);
+
+  const selectedDateSales = daySalesMeta?.totalSales ?? selectedDateOrders.reduce((a, b) => a + b.finalTotal, 0);
+  const selectedDateCashSales = daySalesMeta?.todayCashSales ?? selectedDateOrders
+    .filter(o => !o.paymentMethod || String(o.paymentMethod).trim().toUpperCase() === "CASH")
+    .reduce((a, b) => a + b.finalTotal, 0);
+  const selectedDateUpiSales = daySalesMeta?.todayUpiSales ?? selectedDateOrders
+    .filter(o => String(o.paymentMethod).trim().toUpperCase() === "UPI")
+    .reduce((a, b) => a + b.finalTotal, 0);
 
 
-  const todayCashSales = todayOrders.filter(o => !o.paymentMethod || o.paymentMethod === "Cash").reduce((a, b) => a + b.finalTotal, 0);
-  const todayUpiSales = todayOrders.filter(o => o.paymentMethod === "UPI").reduce((a, b) => a + b.finalTotal, 0);
+
 
   const getDeterministicSortKey = (order) => {
     const base = order.billDate || order.createdAt;
