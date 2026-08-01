@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { fetchOrders } from "../utils/api";
 import AdminNavbar from "./AdminNavbar";
+import { getPaymentMethodType } from "../utils/paymentMethod";
 
 const formatCurrency = (value) =>
   new Intl.NumberFormat("en-IN", {
@@ -9,20 +10,6 @@ const formatCurrency = (value) =>
     maximumFractionDigits: 0,
   }).format(value || 0);
 
-const getPaymentType = (paymentMethod = "Cash") => {
-  const value = (paymentMethod || "Cash").toString().trim().toLowerCase();
-
-  if (
-    value.includes("upi") ||
-    value.includes("online") ||
-    value.includes("qr") ||
-    value.includes("card")
-  ) {
-    return "UPI";
-  }
-
-  return "Cash";
-};
 
 const getDayBucket = (value) => {
   const date = new Date(value);
@@ -66,18 +53,20 @@ const Accounts = () => {
     return orders.reduce(
       (acc, order) => {
         const amount = Number(order.finalTotal) || 0;
-        const paymentType = getPaymentType(order.paymentMethod);
+        const paymentType = getPaymentMethodType(order.paymentMethod);
 
         acc.total += amount;
         if (paymentType === "UPI") {
           acc.upi += amount;
+        } else if (paymentType === "Swiggy") {
+          acc.swiggy += amount;
         } else {
           acc.cash += amount;
         }
 
         return acc;
       },
-      { total: 0, cash: 0, upi: 0 }
+      { total: 0, cash: 0, upi: 0, swiggy: 0 }
     );
   }, [orders]);
 
@@ -103,17 +92,20 @@ const Accounts = () => {
           total: 0,
           cash: 0,
           upi: 0,
+          swiggy: 0,
           days: new Map(),
         });
       }
 
       const monthEntry = grouped.get(monthKey);
       const amount = Number(order.finalTotal) || 0;
-      const paymentType = getPaymentType(order.paymentMethod);
+      const paymentType = getPaymentMethodType(order.paymentMethod);
 
       monthEntry.total += amount;
       if (paymentType === "UPI") {
         monthEntry.upi += amount;
+      } else if (paymentType === "Swiggy") {
+        monthEntry.swiggy += amount;
       } else {
         monthEntry.cash += amount;
       }
@@ -129,6 +121,7 @@ const Accounts = () => {
           total: 0,
           cash: 0,
           upi: 0,
+          swiggy: 0,
         });
       }
 
@@ -136,6 +129,8 @@ const Accounts = () => {
       dayEntry.total += amount;
       if (paymentType === "UPI") {
         dayEntry.upi += amount;
+      } else if (paymentType === "Swiggy") {
+        dayEntry.swiggy += amount;
       } else {
         dayEntry.cash += amount;
       }
@@ -181,7 +176,7 @@ const Accounts = () => {
             </div>
           </div>
 
-          <div className="grid gap-3 md:grid-cols-3">
+          <div className="grid gap-3 md:grid-cols-4">
             <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
               <p className="text-xs uppercase tracking-[0.25em] text-slate-500">Total Collection</p>
               <p className="mt-2 text-2xl font-black text-slate-900">{formatCurrency(summary.total)}</p>
@@ -193,6 +188,10 @@ const Accounts = () => {
             <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
               <p className="text-xs uppercase tracking-[0.25em] text-slate-500">UPI</p>
               <p className="mt-2 text-2xl font-black text-sky-600">{formatCurrency(summary.upi)}</p>
+            </div>
+            <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+              <p className="text-xs uppercase tracking-[0.25em] text-slate-500">Swiggy</p>
+              <p className="mt-2 text-2xl font-black text-purple-600">{formatCurrency(summary.swiggy)}</p>
             </div>
           </div>
         </div>
@@ -228,7 +227,7 @@ const Accounts = () => {
                     <div>
                       <p className="text-lg font-black tracking-wide text-white">{month.label}</p>
                       <p className="text-sm text-slate-300">
-                        {month.days.length} days • daily cash, UPI, and total
+                        {month.days.length} days • daily cash, UPI, Swiggy, and total
                       </p>
                     </div>
 
@@ -240,6 +239,10 @@ const Accounts = () => {
                       <div className="rounded-2xl border border-white/15 bg-white/10 px-3 py-2 text-sm shadow-sm backdrop-blur-sm">
                         <span className="block text-xs uppercase tracking-[0.2em] text-slate-300">UPI</span>
                         <p className="mt-1 font-black text-sky-300">{formatCurrency(month.upi)}</p>
+                      </div>
+                      <div className="rounded-2xl border border-white/15 bg-white/10 px-3 py-2 text-sm shadow-sm backdrop-blur-sm">
+                        <span className="block text-xs uppercase tracking-[0.2em] text-slate-300">Swiggy</span>
+                        <p className="mt-1 font-black text-purple-300">{formatCurrency(month.swiggy)}</p>
                       </div>
                       <div className="rounded-2xl border border-amber-400/40 bg-amber-500/15 px-3 py-2 text-sm shadow-sm backdrop-blur-sm">
                         <span className="block text-xs uppercase tracking-[0.2em] text-slate-300">Total</span>
@@ -261,7 +264,7 @@ const Accounts = () => {
                               <p className="text-xs text-slate-500">Day total only</p>
                             </div>
 
-                            <div className="grid w-full gap-2 sm:w-auto sm:grid-cols-3">
+                            <div className="grid w-full gap-2 sm:w-auto sm:grid-cols-4">
                               <div className="rounded-2xl bg-slate-50 px-3 py-2 text-sm">
                                 <span className="block text-xs uppercase tracking-[0.2em] text-slate-500">Cash</span>
                                 <p className="mt-1 font-semibold text-emerald-600">{formatCurrency(day.cash)}</p>
@@ -269,6 +272,10 @@ const Accounts = () => {
                               <div className="rounded-2xl bg-slate-50 px-3 py-2 text-sm">
                                 <span className="block text-xs uppercase tracking-[0.2em] text-slate-500">UPI</span>
                                 <p className="mt-1 font-semibold text-sky-600">{formatCurrency(day.upi)}</p>
+                              </div>
+                              <div className="rounded-2xl bg-slate-50 px-3 py-2 text-sm">
+                                <span className="block text-xs uppercase tracking-[0.2em] text-slate-500">Swiggy</span>
+                                <p className="mt-1 font-semibold text-purple-600">{formatCurrency(day.swiggy)}</p>
                               </div>
                               <div className="rounded-2xl bg-amber-50 px-3 py-2 text-sm">
                                 <span className="block text-xs uppercase tracking-[0.2em] text-slate-500">Day Total</span>

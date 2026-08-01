@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { fetchProducts, fetchCustomer, createOrder, getOffersInBillingSetting } from "../utils/api";
+import { getPaymentMethodType } from "../utils/paymentMethod";
 
 import socket from "../utils/socket";
 import { getMobileFieldSetting } from "../utils/api";
@@ -358,6 +359,7 @@ const BillingScreen = () => {
               >
                 <option value="Cash">Cash</option>
                 <option value="UPI">UPI</option>
+                <option value="Swiggy">Swiggy</option>
               </select>
             </div>
 

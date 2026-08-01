@@ -9,6 +9,7 @@ const calculateSalesBuckets = (orders) => {
   let totalSales = 0;
   let cashTotal = 0;
   let upiTotal = 0;
+  let swiggyTotal = 0;
 
   for (const order of orders) {
     const amount = Number(order.finalTotal) || 0;
@@ -18,9 +19,10 @@ const calculateSalesBuckets = (orders) => {
     // empty/undefined => Cash bucket (match frontend)
     if (!pm || pm === "CASH") cashTotal += amount;
     else if (pm === "UPI") upiTotal += amount;
+    else if (pm === "SWIGGY") swiggyTotal += amount;
   }
 
-  return { totalSales, cashTotal, upiTotal, totalOrders: orders.length };
+  return { totalSales, cashTotal, upiTotal, swiggyTotal, totalOrders: orders.length };
 };
 
 exports.todaySales = async (req, res) => {
@@ -54,12 +56,13 @@ exports.todaySales = async (req, res) => {
       ]
     });
 
-    const { totalSales, cashTotal, upiTotal, totalOrders } = calculateSalesBuckets(orders);
+    const { totalSales, cashTotal, upiTotal, swiggyTotal, totalOrders } = calculateSalesBuckets(orders);
 
     console.log(
       "✅ [DB] Today's sales calculated - Total: ₹" + totalSales,
       "Cash: ₹" + cashTotal,
       "UPI: ₹" + upiTotal,
+      "Swiggy: ₹" + swiggyTotal,
       "Orders:",
       totalOrders
     );
@@ -68,6 +71,7 @@ exports.todaySales = async (req, res) => {
       totalSales,
       todayCashSales: cashTotal,
       todayUpiSales: upiTotal,
+      todaySwiggySales: swiggyTotal,
       totalOrders
     });
   } catch (error) {
@@ -115,13 +119,14 @@ exports.salesByBillDate = async (req, res) => {
       ]
     });
 
-    const { totalSales, cashTotal, upiTotal, totalOrders } = calculateSalesBuckets(orders);
+    const { totalSales, cashTotal, upiTotal, swiggyTotal, totalOrders } = calculateSalesBuckets(orders);
 
     res.json({
       selectedDate: billDate,
       totalSales,
       todayCashSales: cashTotal,
       todayUpiSales: upiTotal,
+      todaySwiggySales: swiggyTotal,
       totalOrders
     });
   } catch (error) {

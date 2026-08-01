@@ -6,6 +6,7 @@ import { fetchOrders, fetchTodaySales, fetchPurchases, fetchSalesByDate, getMobi
 import { getBusinessDate } from "../utils/dateUtils";
 import AdminNavbar from "./AdminNavbar";
 import socket from "../utils/socket";
+import { getPaymentMethodBadgeClasses, getPaymentMethodType } from "../utils/paymentMethod";
 
 
 const Dashboard = () => {
@@ -13,6 +14,7 @@ const Dashboard = () => {
   const [todaySales, setTodaySales] = useState(0);
   const [todayCashSales, setTodayCashSales] = useState(0);
   const [todayUpiSales, setTodayUpiSales] = useState(0);
+  const [todaySwiggySales, setTodaySwiggySales] = useState(0);
 
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedDate, setSelectedDate] = useState("");
@@ -145,6 +147,7 @@ const Dashboard = () => {
       setTodaySales(res.data.totalSales);
       setTodayCashSales(res.data.todayCashSales);
       setTodayUpiSales(res.data.todayUpiSales);
+      setTodaySwiggySales(res.data.todaySwiggySales || 0);
     } catch (error) {
       console.error("Error fetching today's sales", error);
     }
@@ -208,10 +211,13 @@ THANK YOU
 
   const selectedDateSales = daySalesMeta?.totalSales ?? selectedDateOrders.reduce((a, b) => a + b.finalTotal, 0);
   const selectedDateCashSales = daySalesMeta?.todayCashSales ?? selectedDateOrders
-    .filter(o => !o.paymentMethod || String(o.paymentMethod).trim().toUpperCase() === "CASH")
+    .filter(o => getPaymentMethodType(o.paymentMethod) === "Cash")
     .reduce((a, b) => a + b.finalTotal, 0);
   const selectedDateUpiSales = daySalesMeta?.todayUpiSales ?? selectedDateOrders
-    .filter(o => String(o.paymentMethod).trim().toUpperCase() === "UPI")
+    .filter(o => getPaymentMethodType(o.paymentMethod) === "UPI")
+    .reduce((a, b) => a + b.finalTotal, 0);
+  const selectedDateSwiggySales = daySalesMeta?.todaySwiggySales ?? selectedDateOrders
+    .filter(o => getPaymentMethodType(o.paymentMethod) === "Swiggy")
     .reduce((a, b) => a + b.finalTotal, 0);
 
 
@@ -422,9 +428,10 @@ THANK YOU
           <div className="bg-slate-950/90 p-4 rounded-[2rem] border border-slate-700/70 shadow-xl text-center flex flex-col justify-center min-h-[120px]">
             <h2 className="text-[9px] sm:text-[11px] font-semibold text-slate-100 mb-2 uppercase tracking-[0.07em]">Today's Sales</h2>
             <p className="text-xl sm:text-2xl font-black text-amber-300">₹{formatCurrency(todaySales)}</p>
-            <div className="flex justify-center gap-3 mt-2">
+            <div className="flex flex-wrap justify-center gap-2 mt-2">
               <span className="text-xs sm:text-sm font-bold text-emerald-400">CASH: ₹{formatCurrency(todayCashSales)}</span>
               <span className="text-xs sm:text-sm font-bold text-blue-400">UPI: ₹{formatCurrency(todayUpiSales)}</span>
+              <span className="text-xs sm:text-sm font-bold text-purple-400">SWIGGY: ₹{formatCurrency(todaySwiggySales)}</span>
             </div>
           </div>
 
@@ -447,9 +454,10 @@ THANK YOU
             <h2 className="text-[9px] sm:text-[11px] font-semibold text-slate-100 mb-2 uppercase tracking-[0.07em]">Day Sales</h2>
             <p className="text-xl sm:text-2xl font-black text-violet-300">{selectedDate ? `₹${formatCurrency(selectedDateSales)}` : "—"}</p>
             {selectedDate && (
-              <div className="flex justify-center gap-3 mt-2">
+              <div className="flex flex-wrap justify-center gap-2 mt-2">
                 <span className="text-xs sm:text-sm font-bold text-emerald-400">CASH: ₹{formatCurrency(selectedDateCashSales)}</span>
                 <span className="text-xs sm:text-sm font-bold text-blue-400">UPI: ₹{formatCurrency(selectedDateUpiSales)}</span>
+                <span className="text-xs sm:text-sm font-bold text-purple-400">SWIGGY: ₹{formatCurrency(selectedDateSwiggySales)}</span>
               </div>
             )}
             <p className="text-sm sm:text-base mt-2 text-slate-400">{selectedDate ? `${selectedDateOrders.length} orders` : "Select a date above"}</p>
@@ -519,8 +527,8 @@ THANK YOU
                     <td className="p-3 sm:p-4 font-mono text-slate-300 text-sm sm:text-base">{order.billId}</td>
                     <td className="p-3 sm:p-4 font-semibold text-slate-100 text-sm sm:text-base">{order.mobile || "GUEST"}</td>
                     <td className="p-3 sm:p-4 font-semibold text-sm sm:text-base">
-                      <span className={`px-2 py-1 rounded-lg text-[10px] font-bold uppercase ${order.paymentMethod === 'UPI' ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30' : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'}`}>
-                        {order.paymentMethod || "CASH"}
+                      <span className={`px-2 py-1 rounded-lg text-[10px] font-bold uppercase ${getPaymentMethodBadgeClasses(order.paymentMethod)}`}>
+                        {getPaymentMethodType(order.paymentMethod)}
                       </span>
                     </td>
                     <td className="p-3 sm:p-4 font-bold text-right text-amber-300 text-sm sm:text-base">₹{formatCurrency(order.finalTotal)}</td>

@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback, useMemo } from "react";
 import { fetchOrders, deleteOrder, updateOrder } from "../utils/api";
 import { getBusinessDate } from "../utils/dateUtils";
 import { fetchProducts } from "../utils/api";
+import { getPaymentMethodBadgeClasses, getPaymentMethodType } from "../utils/paymentMethod";
 
 import AdminNavbar from "./AdminNavbar";
 import socket from "../utils/socket";
@@ -525,8 +526,8 @@ const businessTime = (value) => {
                     </div>
                   </td>
                   <td className="p-3 sm:p-4">
-                    <span className={`px-2 py-1 rounded-lg text-[10px] font-bold uppercase ${order.paymentMethod === 'UPI' ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30' : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'}`}>
-                      {order.paymentMethod || "CASH"}
+                    <span className={`px-2 py-1 rounded-lg text-[10px] font-bold uppercase ${getPaymentMethodBadgeClasses(order.paymentMethod)}`}>
+                      {getPaymentMethodType(order.paymentMethod)}
                     </span>
                   </td>
                   <td className="p-3 sm:p-4 text-right">
@@ -591,6 +592,7 @@ const businessTime = (value) => {
                   >
                     <option value="Cash">Cash</option>
                     <option value="UPI">UPI</option>
+                    <option value="Swiggy">Swiggy</option>
                   </select>
                 </div>
               </div>

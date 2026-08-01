@@ -15,6 +15,7 @@ import {
   Cell,
   Legend
 } from "recharts";
+import { getPaymentMethodType } from "../utils/paymentMethod";
 
 const ProductAnalysis = () => {
   const [orders, setOrders] = useState([]);
@@ -60,12 +61,13 @@ const ProductAnalysis = () => {
     let totalRevenue = 0;
     let totalCashRevenue = 0;
     let totalUpiRevenue = 0;
+    let totalSwiggyRevenue = 0;
 
     orders.forEach((order) => {
       const orderMonth = monthKey(order.billDate || order.createdAt);
 
 
-      const isUpi = order.paymentMethod === "UPI";
+      const paymentType = getPaymentMethodType(order.paymentMethod);
 
       if (!monthly[orderMonth]) {
         monthly[orderMonth] = {};
@@ -81,8 +83,10 @@ const ProductAnalysis = () => {
         totalRevenue += revenue;
 
         // Split revenue by payment method
-        if (isUpi) {
+        if (paymentType === "UPI") {
           totalUpiRevenue += revenue;
+        } else if (paymentType === "Swiggy") {
+          totalSwiggyRevenue += revenue;
         } else {
           totalCashRevenue += revenue;
         }
@@ -108,7 +112,7 @@ const ProductAnalysis = () => {
       productStats: overall,
       monthOptions: monthKeys,
       productStatsByMonth: monthly,
-      overallTotals: { totalQty, totalRevenue, totalCashRevenue, totalUpiRevenue, totalProducts: overall.length }
+      overallTotals: { totalQty, totalRevenue, totalCashRevenue, totalUpiRevenue, totalSwiggyRevenue, totalProducts: overall.length }
     };
   }, [orders]);
 
@@ -185,9 +189,10 @@ const ProductAnalysis = () => {
             <div className="rounded-3xl bg-white p-5 border border-slate-200 shadow-sm">
               <p className="text-xs uppercase tracking-[0.25em] text-slate-500 mb-3">Total Revenue</p>
               <p className="text-3xl font-black text-emerald-600">₹{overallTotals.totalRevenue.toFixed(2)}</p>
-              <div className="flex gap-3 mt-2">
+              <div className="flex flex-wrap gap-3 mt-2">
                 <span className="text-sm font-bold text-emerald-600">CASH: ₹{overallTotals.totalCashRevenue.toFixed(2)}</span>
                 <span className="text-sm font-bold text-blue-600">UPI: ₹{overallTotals.totalUpiRevenue.toFixed(2)}</span>
+                <span className="text-sm font-bold text-purple-600">SWIGGY: ₹{overallTotals.totalSwiggyRevenue.toFixed(2)}</span>
               </div>
             </div>
           </div>
