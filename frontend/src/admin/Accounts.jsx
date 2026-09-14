@@ -66,7 +66,7 @@ const Accounts = () => {
       const [y, mm] = m.month.split("-").map(Number);
       if (y < currentYear) return true;
       if (y > currentYear) return false;
-      return (mm - 1) < currentMonth;
+      return (mm - 1) <= currentMonth;
     });
   }, [monthlyExpenses]);
 
