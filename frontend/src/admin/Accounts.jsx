@@ -70,6 +70,32 @@ const Accounts = () => {
     });
   }, [monthlyExpenses]);
 
+  const expenseSummary = useMemo(() => {
+    return filteredMonthlyExpenses.reduce(
+      (acc, m) => {
+        acc.totalPurchase += m.totalPurchase || 0;
+        acc.staffSalary += m.staffSalary || 0;
+        acc.roomRent += m.roomRent || 0;
+        acc.shopRent += m.shopRent || 0;
+        acc.shopDeposit += m.shopDeposit || 0;
+        acc.roomDeposit += m.roomDeposit || 0;
+        acc.otherExpenses += m.otherExpenses || 0;
+        acc.grandTotal += (m.totalPurchase || 0) + (m.staffSalary || 0) + (m.roomRent || 0) + (m.shopRent || 0) + (m.shopDeposit || 0) + (m.roomDeposit || 0) + (m.otherExpenses || 0);
+        return acc;
+      },
+      {
+        totalPurchase: 0,
+        staffSalary: 0,
+        roomRent: 0,
+        shopRent: 0,
+        shopDeposit: 0,
+        roomDeposit: 0,
+        otherExpenses: 0,
+        grandTotal: 0,
+      }
+    );
+  }, [filteredMonthlyExpenses]);
+
   const summary = useMemo(() => {
     return orders.reduce(
       (acc, order) => {
@@ -222,31 +248,31 @@ const Accounts = () => {
                   <p className="text-sm font-semibold uppercase tracking-[0.25em] text-slate-500">
                     Accounts Overview
                   </p>
-                  <h1 className="text-2xl font-black tracking-tight text-slate-900 sm:text-3xl">
+                  <h3 className="text-2xl font-black tracking-tight text-slate-900 sm:text-3xl">
                     Daily Collections
-                  </h1>
+                  </h3>
                 </div>
                 <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/10 px-4 py-2 text-sm font-semibold text-emerald-700">
                   {orders.length} bills tracked
                 </div>
               </div>
 
-              <div className="grid gap-3 md:grid-cols-4">
-                <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-                  <p className="text-xs uppercase tracking-[0.25em] text-slate-500">Total Collection</p>
-                  <p className="mt-2 text-2xl font-black text-slate-900">{formatCurrency(summary.total)}</p>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 w-full">
+                <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm flex flex-col justify-center">
+                  <p className="text-[15px] font-bold uppercase tracking-wider text-slate-500">Cash</p>
+                  <p className="mt-1 text-xl font-black text-emerald-600">{formatCurrency(summary.cash)}</p>
                 </div>
-                <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-                  <p className="text-xs uppercase tracking-[0.25em] text-slate-500">Cash</p>
-                  <p className="mt-2 text-2xl font-black text-emerald-600">{formatCurrency(summary.cash)}</p>
+                <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm flex flex-col justify-center">
+                  <p className="text-[15px] font-bold uppercase tracking-wider text-slate-500">UPI</p>
+                  <p className="mt-1 text-xl font-black text-sky-600">{formatCurrency(summary.upi)}</p>
                 </div>
-                <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-                  <p className="text-xs uppercase tracking-[0.25em] text-slate-500">UPI</p>
-                  <p className="mt-2 text-2xl font-black text-sky-600">{formatCurrency(summary.upi)}</p>
+                <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm flex flex-col justify-center">
+                  <p className="text-[15px] font-bold uppercase tracking-wider text-slate-500">Swiggy</p>
+                  <p className="mt-1 text-xl font-black text-purple-600">{formatCurrency(summary.swiggy)}</p>
                 </div>
-                <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-                  <p className="text-xs uppercase tracking-[0.25em] text-slate-500">Swiggy</p>
-                  <p className="mt-2 text-2xl font-black text-purple-600">{formatCurrency(summary.swiggy)}</p>
+                <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm flex flex-col justify-center">
+                  <p className="text-[15px] font-bold uppercase tracking-wider text-slate-500">Total Collection</p>
+                  <p className="mt-1 text-xl font-black text-slate-900">{formatCurrency(summary.total)}</p>
                 </div>
               </div>
             </div>
@@ -351,16 +377,66 @@ const Accounts = () => {
         ) : (
           <div className="space-y-6">
             <div className="premium-card border border-slate-200 bg-white/95 p-6 shadow-xl backdrop-blur-sm">
-              <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+              <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <p className="text-sm font-semibold uppercase tracking-[0.25em] text-slate-500">
                     Expense Overview
                   </p>
-
+                  <h2 className="text-2xl font-black tracking-tight text-slate-900 sm:text-3xl">
+                    Monthly Expense Summary
+                  </h2>
                 </div>
-{/*                 <div className="rounded-2xl border border-rose-500/20 bg-rose-500/10 px-4 py-2 text-sm font-semibold text-rose-700"> */}
-{/*                   Showing up to last month */}
-{/*                 </div> */}
+                <div className="rounded-2xl border border-rose-500/20 bg-rose-500/10 px-4 py-2 text-sm font-semibold text-rose-700">
+                  {filteredMonthlyExpenses.length} months tracked
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-3 w-full pb-1">
+                <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm flex flex-col justify-center">
+                  <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Total Purchase</p>
+                  <p className="mt-1 text-base font-black text-slate-700">{formatCurrency(expenseSummary.totalPurchase)}</p>
+                </div>
+                <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm flex flex-col justify-center">
+                  <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Staff Salary</p>
+                  <p className="mt-1 text-base font-black text-emerald-600">{formatCurrency(expenseSummary.staffSalary)}</p>
+                </div>
+                <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm flex flex-col justify-center">
+                  <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Room Rent</p>
+                  <p className="mt-1 text-base font-black text-sky-600">{formatCurrency(expenseSummary.roomRent)}</p>
+                </div>
+                <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm flex flex-col justify-center">
+                  <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Shop Rent</p>
+                  <p className="mt-1 text-base font-black text-purple-600">{formatCurrency(expenseSummary.shopRent)}</p>
+                </div>
+                <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm flex flex-col justify-center">
+                  <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Shop Deposit</p>
+                  <p className="mt-1 text-base font-black text-amber-600">{formatCurrency(expenseSummary.shopDeposit)}</p>
+                </div>
+                <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm flex flex-col justify-center">
+                  <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Room Deposit</p>
+                  <p className="mt-1 text-base font-black text-rose-600">{formatCurrency(expenseSummary.roomDeposit)}</p>
+                </div>
+                <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm flex flex-col justify-center">
+                  <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Other</p>
+                  <p className="mt-1 text-base font-black text-orange-600">{formatCurrency(expenseSummary.otherExpenses)}</p>
+                </div>
+              </div>
+
+              <div className="mt-4 flex justify-end">
+                <div className="rounded-2xl border border-slate-900 bg-slate-900 px-8 py-4 shadow-xl text-right">
+                  <p className="text-[11px] uppercase tracking-[0.2em] text-slate-400 font-black">Grand Total</p>
+                  <p className="mt-1 text-2xl font-black text-white">{formatCurrency(expenseSummary.grandTotal)}</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="premium-card border border-slate-200 bg-white/95 p-6 shadow-xl backdrop-blur-sm">
+              <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <p className="text-sm font-semibold uppercase tracking-[0.25em] text-slate-500">
+                    Expense Breakdown
+                  </p>
+                </div>
               </div>
 
               {loading ? (

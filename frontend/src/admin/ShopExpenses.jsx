@@ -3,10 +3,10 @@ import AdminNavbar from './AdminNavbar';
 import socket from '../utils/socket';
 import { fetchShopExpenses, addShopExpense, deleteShopExpense } from '../utils/api';
 
-const ShopExpenses = () => {
+export const ShopExpensesContent = () => {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [viewTab, setViewTab] = useState('All'); // All, Shop, EMI, Room
+  const [viewTab, setViewTab] = useState('All');
   const [form, setForm] = useState({
     category: 'Shop',
     subcategory: 'Deposit',
@@ -124,115 +124,128 @@ const ShopExpenses = () => {
     return { emiTotal, shopRentTotal, roomRentTotal, shopDepositTotal, roomDepositTotal };
   }, [items]);
 
-  if (loading) return <div className="min-h-screen flex items-center justify-center text-amber-300 font-bold">Loading...</div>;
+  if (loading) return <div className="flex items-center justify-center text-amber-300 font-bold py-20 text-xl animate-pulse italic">Loading Shop Data...</div>;
 
   return (
-    <div className="min-h-screen text-slate-100 px-3 py-4">
-      <AdminNavbar />
-      <h1 className="font-extrabold text-center tracking-tight text-amber-300 mb-8">Shop Expenses</h1>
+    <div className="space-y-6">
+      <div className="text-center">
+        <h2 className="text-xl font-black tracking-tight text-amber-300 uppercase">Infrastructure & Management</h2>
+{/*         <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">Infrastructure & EMI Management</p> */}
+      </div>
 
-      <div className="mx-auto max-w-6xl grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-1 premium-card p-6 border border-slate-700/70">
-          <h2 className="font-semibold mb-4 uppercase text-slate-100 text-sm tracking-widest">➕ New Record</h2>
+      <div className="mx-auto max-w-6xl grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div className="lg:col-span-1 premium-card p-4 border border-slate-700/70 bg-slate-900/50 backdrop-blur-md">
+          <h2 className="text-xs font-black mb-4 uppercase text-slate-100 tracking-widest">➕ New Record</h2>
           <div className="space-y-3">
-            <label className="block text-xs font-black uppercase text-slate-400">Category</label>
-            <select value={form.category} onChange={(e) => setForm({
-              ...form,
-              category: e.target.value,
-              subcategory: e.target.value === 'EMI' ? '' : 'Deposit',
-              emiName: ''
-            })} className="premium-input w-full px-4 py-2">
-              <option value="Shop">Shop</option>
-              <option value="EMI">EMI</option>
-              <option value="Room">Room</option>
-            </select>
+            <div>
+              <label className="block text-[9px] font-black uppercase text-slate-500 mb-1 tracking-wider">Category</label>
+              <select value={form.category} onChange={(e) => setForm({
+                ...form,
+                category: e.target.value,
+                subcategory: e.target.value === 'EMI' ? '' : 'Deposit',
+                emiName: ''
+              })} className="w-full px-3 py-2 text-xs font-bold bg-slate-950 border border-slate-700 rounded-xl text-slate-100 focus:border-amber-400 outline-none transition-colors">
+                <option value="Shop">Shop</option>
+                <option value="EMI">EMI</option>
+                <option value="Room">Room</option>
+              </select>
+            </div>
 
             {['Shop', 'Room'].includes(form.category) && (
-              <>
-                <label className="block text-xs font-black uppercase text-slate-400">Subcategory</label>
-                <select value={form.subcategory} onChange={(e) => setForm({ ...form, subcategory: e.target.value })} className="premium-input w-full px-4 py-2">
+              <div>
+                <label className="block text-[9px] font-black uppercase text-slate-500 mb-1 tracking-wider">Subcategory</label>
+                <select value={form.subcategory} onChange={(e) => setForm({ ...form, subcategory: e.target.value })} className="w-full px-3 py-2 text-xs font-bold bg-slate-950 border border-slate-700 rounded-xl text-slate-100 focus:border-amber-400 outline-none transition-colors">
                   <option value="Deposit">Deposit</option>
                   <option value="Rent">Rent</option>
                 </select>
-              </>
+              </div>
             )}
 
             {form.category === 'EMI' && (
-              <>
-                <label className="block text-xs font-black uppercase text-slate-400">EMI Name</label>
-                <input type="text" value={form.emiName} onChange={(e) => setForm({ ...form, emiName: e.target.value })} className="premium-input w-full px-4 py-2" placeholder="EMI lender or loan name" />
-              </>
+              <div>
+                <label className="block text-[9px] font-black uppercase text-slate-500 mb-1 tracking-wider">EMI Name</label>
+                <input type="text" value={form.emiName} onChange={(e) => setForm({ ...form, emiName: e.target.value })} className="w-full px-3 py-2 text-xs font-bold bg-slate-950 border border-slate-700 rounded-xl text-slate-100 focus:border-amber-400 outline-none transition-colors" placeholder="Lender name" />
+              </div>
             )}
 
-            <label className="block text-xs font-black uppercase text-slate-400">Amount</label>
-            <input type="number" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} className="premium-input w-full px-4 py-2" placeholder="₹" />
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <label className="block text-[9px] font-black uppercase text-slate-500 mb-1 tracking-wider">Amount</label>
+                <input type="number" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} className="w-full px-3 py-2 text-xs font-bold bg-slate-950 border border-slate-700 rounded-xl text-slate-100 focus:border-amber-400 outline-none transition-colors" placeholder="₹" />
+              </div>
+              <div>
+                <label className="block text-[9px] font-black uppercase text-slate-500 mb-1 tracking-wider">Date</label>
+                <input type="date" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} className="w-full px-3 py-2 text-xs font-bold bg-slate-950 border border-slate-700 rounded-xl text-slate-100 focus:border-amber-400 outline-none transition-colors" />
+              </div>
+            </div>
 
-            <label className="block text-xs font-black uppercase text-slate-400">Date</label>
-            <input type="date" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} className="premium-input w-full px-4 py-2" />
+            <div>
+              <label className="block text-[9px] font-black uppercase text-slate-500 mb-1 tracking-wider">Description</label>
+              <textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} className="w-full px-3 py-2 text-xs font-bold bg-slate-950 border border-slate-700 rounded-xl text-slate-100 focus:border-amber-400 outline-none transition-colors h-16 resize-none" placeholder="Notes..." />
+            </div>
 
-            <label className="block text-xs font-black uppercase text-slate-400">Description</label>
-            <textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} className="premium-input w-full px-4 py-2 h-24" />
-
-            <button onClick={save} className="w-full premium-button py-3 bg-gradient-to-r from-emerald-400 to-teal-500 text-slate-950 font-black rounded-xl">SAVE</button>
+            <button onClick={save} className="w-full py-2.5 bg-gradient-to-r from-emerald-500 to-teal-600 text-slate-950 font-black text-xs rounded-xl shadow-lg shadow-emerald-900/20 hover:scale-[1.02] active:scale-[0.98] transition-all uppercase tracking-widest">SAVE RECORD</button>
           </div>
         </div>
 
-        <div className="lg:col-span-2 space-y-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2">
-            <div className="premium-card p-4 border border-slate-700/70">
-              <div className="text-sm uppercase tracking-[0.2em] text-slate-500 mb-2">Overall EMI Paid</div>
-              <div className="text-xl font-black text-emerald-400">₹{totals.emiTotal.toFixed(2)}</div>
+        <div className="lg:col-span-2 space-y-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
+            <div className="premium-card p-3 border border-slate-700/70 bg-slate-900/30 flex flex-col justify-center">
+              <div className="text-[12px] uppercase tracking-widest text-slate-500 font-black mb-1">Total EMI</div>
+              <div className="text-sm font-black text-emerald-400">₹{totals.emiTotal.toLocaleString()}</div>
             </div>
-            <div className="premium-card p-4 border border-slate-700/70">
-              <div className="text-sm uppercase tracking-[0.2em] text-slate-500 mb-2">Shop Rent Paid</div>
-              <div className="text-xl font-black text-amber-300">₹{totals.shopRentTotal.toFixed(2)}</div>
+            <div className="premium-card p-3 border border-slate-700/70 bg-slate-900/30 flex flex-col justify-center">
+              <div className="text-[12px] uppercase tracking-widest text-slate-500 font-black mb-1">Shop Rent</div>
+              <div className="text-sm font-black text-amber-300">₹{totals.shopRentTotal.toLocaleString()}</div>
             </div>
-            <div className="premium-card p-4 border border-slate-700/70">
-              <div className="text-sm uppercase tracking-[0.2em] text-slate-500 mb-2">Room Rent Paid</div>
-              <div className="text-xl font-black text-sky-400">₹{totals.roomRentTotal.toFixed(2)}</div>
+            <div className="premium-card p-3 border border-slate-700/70 bg-slate-900/30 flex flex-col justify-center">
+              <div className="text-[12px] uppercase tracking-widest text-slate-500 font-black mb-1">Room Rent</div>
+              <div className="text-sm font-black text-sky-400">₹{totals.roomRentTotal.toLocaleString()}</div>
             </div>
-            <div className="premium-card p-4 border border-slate-700/70">
-              <div className="text-sm uppercase tracking-[0.2em] text-slate-500 mb-2">Shop Deposit Paid</div>
-              <div className="text-xl font-black text-indigo-400">₹{totals.shopDepositTotal.toFixed(2)}</div>
+            <div className="premium-card p-3 border border-slate-700/70 bg-slate-900/30 flex flex-col justify-center">
+              <div className="text-[12px] uppercase tracking-widest text-slate-500 font-black mb-1">Shop Dep.</div>
+              <div className="text-sm font-black text-indigo-400">₹{totals.shopDepositTotal.toLocaleString()}</div>
             </div>
-            <div className="premium-card p-4 border border-slate-700/70">
-              <div className="text-sm uppercase tracking-[0.2em] text-slate-500 mb-2">Room Deposit Paid</div>
-              <div className="text-xl font-black text-pink-400">₹{totals.roomDepositTotal.toFixed(2)}</div>
+            <div className="premium-card p-3 border border-slate-700/70 bg-slate-900/30 flex flex-col justify-center">
+              <div className="text-[12px] uppercase tracking-widest text-slate-500 font-black mb-1">Room Dep.</div>
+              <div className="text-sm font-black text-pink-400">₹{totals.roomDepositTotal.toLocaleString()}</div>
             </div>
           </div>
 
-          <div className="premium-card p-4 border border-slate-700/70">
-            <div className="mb-3 flex gap-3 flex-wrap">
+          <div className="premium-card p-4 border border-slate-700/70 bg-slate-950/20">
+            <div className="mb-4 flex gap-2 flex-wrap">
               {['All', 'Shop', 'EMI', 'Room'].map(tab => (
-                <button key={tab} onClick={() => setViewTab(tab)} className={`px-4 py-2 rounded-full font-semibold ${viewTab === tab ? 'bg-cyan-400 text-slate-900' : 'bg-slate-900/80 text-slate-200'}`}>
+                <button key={tab} onClick={() => setViewTab(tab)} className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${viewTab === tab ? 'bg-cyan-500 text-slate-950 shadow-lg shadow-cyan-900/20' : 'bg-slate-900 text-slate-400 hover:bg-slate-800'}`}>
                   {tab}
                 </button>
               ))}
             </div>
             <div className="overflow-x-auto">
               <table className="w-full text-left">
-                <thead className="bg-slate-900 text-slate-100">
+                <thead className="bg-slate-950/50 text-slate-500 text-[12px] uppercase font-black tracking-wider">
                   <tr>
                     <th className="p-3">Date</th>
-                    <th className="p-3">Category</th>
+                    <th className="p-3">Type</th>
                     <th className="p-3">Details</th>
                     <th className="p-3 text-right">Amount</th>
                     <th className="p-3 text-center">Action</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-700">
+                <tbody className="divide-y divide-slate-800">
                   {filtered.length === 0 ? (
-                    <tr><td colSpan="6" className="p-6 text-center text-slate-400">No records</td></tr>
+                    <tr><td colSpan="6" className="p-10 text-center text-slate-600 font-bold uppercase tracking-widest text-xs italic">No records found</td></tr>
                   ) : filtered.map((it, idx) => (
-                    <tr key={it._id} className={`${idx % 2 === 0 ? 'bg-slate-950/30' : 'bg-transparent'}`}>
-                      <td className="p-3 text-sm">{new Date(it.date).toLocaleDateString()}</td>
-                      <td className="p-3 text-sm font-bold">{it.category}</td>
-                      <td className="p-3 text-sm">
+                    <tr key={it._id} className={`${idx % 2 === 0 ? 'bg-slate-900/20' : 'bg-transparent'} hover:bg-slate-800/40 transition-colors group`}>
+                      <td className="p-3 text-[11px] font-bold text-slate-400">{new Date(it.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}</td>
+                      <td className="p-3">
+                        <div className="text-[11px] font-black uppercase text-amber-400">{it.category}</div>
+                      </td>
+                      <td className="p-3 text-[11px] font-medium text-slate-300 max-w-[150px] truncate">
                         {it.category === 'EMI' ? it.emiName || '—' : it.subcategory || '—'}
                         {it.description ? ` • ${it.description}` : ''}
                       </td>
-                      <td className="p-3 text-right font-bold">₹{it.amount}</td>
-                      <td className="p-3 text-center"><button onClick={() => setConfirm({ show: true, id: it._id })} className="text-rose-400">Delete</button></td>
+                      <td className="p-3 text-right font-black text-rose-400 text-xs">₹{it.amount.toLocaleString()}</td>
+                      <td className="p-3 text-center"><button onClick={() => setConfirm({ show: true, id: it._id })} className="text-rose-500/50 group-hover:text-rose-500 transition-colors font-black text-[11px] uppercase tracking-tighter bg-rose-500/5 px-2 py-1 rounded-lg border border-rose-500/10">Delete</button></td>
                     </tr>
                   ))}
                 </tbody>
@@ -244,25 +257,35 @@ const ShopExpenses = () => {
 
       {alert.show && (
         <div className="fixed inset-0 flex items-center justify-center z-[100] bg-black/60 p-4">
-          <div className="bg-white p-6 rounded-2xl max-w-sm w-full text-center">
-            <p className="text-gray-700 mb-4 font-medium">{alert.message}</p>
-            <button onClick={() => setAlert({ show: false, message: '' })} className="w-full bg-amber-500 text-slate-900 py-2.5 rounded-xl font-bold">OK</button>
+          <div className="bg-slate-900 border border-slate-700 p-6 rounded-2xl max-w-sm w-full text-center shadow-2xl">
+             <h2 className="text-lg font-black mb-2 text-cyan-400 uppercase tracking-tighter italic">FRUTERIA</h2>
+            <p className="text-slate-300 mb-6 font-bold text-sm">{alert.message}</p>
+            <button onClick={() => setAlert({ show: false, message: '' })} className="w-full bg-cyan-500 text-slate-950 py-2.5 rounded-xl font-black text-xs uppercase tracking-widest shadow-lg shadow-cyan-500/20">OK</button>
           </div>
         </div>
       )}
 
       {confirm.show && (
         <div className="fixed inset-0 flex items-center justify-center z-[100] bg-black/60 p-4">
-          <div className="bg-slate-900 text-slate-100 p-6 rounded-3xl max-w-sm w-full shadow-2xl">
-            <h3 className="text-xl font-bold mb-3">Confirm Delete</h3>
-            <p className="text-slate-300 mb-6">Are you sure you want to delete this expense record? This action cannot be undone.</p>
+          <div className="bg-slate-900 border border-slate-700 p-6 rounded-2xl max-w-sm w-full text-center shadow-2xl">
+            <h2 className="text-lg font-black mb-2 text-rose-500 uppercase tracking-tighter">Confirm Delete</h2>
+            <p className="text-slate-300 mb-6 font-bold text-sm italic">Are you sure? This action cannot be undone.</p>
             <div className="flex gap-3">
-              <button onClick={() => setConfirm({ show: false, id: null })} className="flex-1 border border-slate-700 text-slate-100 py-2 rounded-xl">Cancel</button>
-              <button onClick={() => remove(confirm.id)} className="flex-1 bg-rose-500 text-white py-2 rounded-xl font-bold">Delete</button>
+              <button onClick={() => setConfirm({ show: false, id: null })} className="flex-1 bg-slate-800 text-slate-300 py-2.5 rounded-xl font-black text-xs uppercase tracking-widest">CANCEL</button>
+              <button onClick={() => remove(confirm.id)} className="flex-1 bg-rose-500 text-white py-2.5 rounded-xl font-black text-xs uppercase tracking-widest">DELETE</button>
             </div>
           </div>
         </div>
       )}
+    </div>
+  );
+};
+
+const ShopExpenses = () => {
+  return (
+    <div className="min-h-screen text-slate-100 px-3 py-4">
+      <AdminNavbar />
+      <ShopExpensesContent />
     </div>
   );
 };
