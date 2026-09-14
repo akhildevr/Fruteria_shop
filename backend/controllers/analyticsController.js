@@ -1,4 +1,7 @@
 const Order = require("../models/Order");
+const Purchase = require("../models/Purchase");
+const StaffExpense = require("../models/StaffExpense");
+const ShopExpense = require("../models/ShopExpense");
 
 const normalizePaymentMethod = (pm) => {
   if (!pm) return "";
@@ -131,6 +134,83 @@ exports.salesByBillDate = async (req, res) => {
     });
   } catch (error) {
     console.error("❌ [ERROR] salesByBillDate failed:", error.message);
+    res.status(500).json({ error: error.message });
+  }
+};
+
+exports.getMonthlyExpenses = async (req, res) => {
+  try {
+    const { year } = req.query;
+    const filterYear = year ? parseInt(year) : new Date().getFullYear();
+
+    const startOfYear = new Date(filterYear, 0, 1);
+    const endOfYear = new Date(filterYear + 1, 0, 1);
+
+    const query = { date: { $gte: startOfYear, $lt: endOfYear } };
+
+    const [purchases, staffExpenses, shopExpenses] = await Promise.all([
+      Purchase.find(query),
+      StaffExpense.find(query),
+      ShopExpense.find(query),
+    ]);
+
+    const monthlyData = {};
+
+    for (let i = 0; i < 12; i++) {
+      const monthKey = `${filterYear}-${String(i + 1).padStart(2, '0')}`;
+      const label = new Date(filterYear, i).toLocaleDateString("en-IN", {
+        month: "long",
+        year: "numeric",
+      });
+      monthlyData[monthKey] = {
+        month: monthKey,
+        label,
+        totalPurchase: 0,
+        staffSalary: 0,
+        roomRent: 0,
+        shopRent: 0,
+        shopDeposit: 0,
+        roomDeposit: 0,
+        otherExpenses: 0
+      };
+    }
+
+    purchases.forEach(p => {
+      const m = `${p.date.getFullYear()}-${String(p.date.getMonth() + 1).padStart(2, '0')}`;
+      if (monthlyData[m]) monthlyData[m].totalPurchase += Number(p.price) || 0;
+    });
+
+    staffExpenses.forEach(e => {
+      const m = `${e.date.getFullYear()}-${String(e.date.getMonth() + 1).padStart(2, '0')}`;
+      if (monthlyData[m]) {
+        if (e.type === 'Salary' || e.type === 'Advance') {
+          monthlyData[m].staffSalary += Number(e.amount) || 0;
+        } else if (e.type === 'Room') {
+          monthlyData[m].roomRent += Number(e.amount) || 0;
+        } else if (e.type === 'Food' || e.type === 'Other') {
+          monthlyData[m].otherExpenses += Number(e.amount) || 0;
+        }
+      }
+    });
+
+    shopExpenses.forEach(e => {
+      const m = `${e.date.getFullYear()}-${String(e.date.getMonth() + 1).padStart(2, '0')}`;
+      if (monthlyData[m]) {
+        if (e.category === 'Shop') {
+          if (e.subcategory === 'Rent') monthlyData[m].shopRent += Number(e.amount) || 0;
+          if (e.subcategory === 'Deposit') monthlyData[m].shopDeposit += Number(e.amount) || 0;
+        } else if (e.category === 'Room') {
+          if (e.subcategory === 'Rent') monthlyData[m].roomRent += Number(e.amount) || 0;
+          if (e.subcategory === 'Deposit') monthlyData[m].roomDeposit += Number(e.amount) || 0;
+        }
+      }
+    });
+
+    const result = Object.values(monthlyData).sort((a, b) => b.month.localeCompare(a.month));
+
+    res.json(result);
+  } catch (error) {
+    console.error("❌ [ERROR] getMonthlyExpenses failed:", error.message);
     res.status(500).json({ error: error.message });
   }
 };
